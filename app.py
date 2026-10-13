@@ -12,13 +12,15 @@ import threading
 import time
 
 import requests
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, send_from_directory
 
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
     pass
+
+import plans  # noqa: E402
 
 app = Flask(__name__)
 import hubguard  # noqa: E402  (the owner's universal switches, kept in Cramly)
@@ -179,6 +181,26 @@ def home():
     return render_template("index.html", ai=ai_on())
 
 
+@app.get("/manifest.webmanifest")
+def manifest():
+    return jsonify(name="Womanten", short_name="Womanten", start_url="/", display="standalone", background_color="#0a0a0a", theme_color="#0a0a0a",
+                   description="A confidence and habits coach.", icons=[{"src": "/static/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}])
+
+
+@app.get("/sw.js")
+def sw():
+    return app.response_class("self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));self.addEventListener('fetch',()=>{});",
+                              mimetype="application/javascript")
+
+
+@app.get("/download")
+def download():
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+    if not os.path.exists(os.path.join(path, "womanten.apk")):
+        return err("The Android app is not uploaded yet.", 404)
+    return send_from_directory(path, "womanten.apk", as_attachment=True, mimetype="application/vnd.android.package-archive")
+
+
 @app.get("/health")
 def health():
     return jsonify(ok=True, ai=ai_on())
@@ -238,6 +260,33 @@ def plan():
         except Exception:
             pass
     return jsonify(week=library_week(focus), ai=False)
+
+
+def ai_plan(prompt, clean_fn, inputs, fallback_fn, key):
+    """Ask the AI for a plan; if it is off, slow or sends something unusable, give the built-in plan instead."""
+    if ai_on():
+        try:
+            raw = ask([{"role": "system", "content": plans.PLAN_RULES}, {"role": "user", "content": prompt(inputs)}], want_json=True, max_tokens=3500)
+            return jsonify({key: clean_fn(raw, inputs), "ai": True, "inputs": inputs})
+        except Exception:
+            pass
+    return jsonify({key: fallback_fn(inputs), "ai": False, "inputs": inputs})
+
+
+@app.post("/api/workout")
+def workout_plan():
+    if limited("plan", 20):
+        return err("Too many plans for now. Try again later.", 429)
+    x = plans.workout_inputs(request.get_json(silent=True) or {})
+    return ai_plan(plans.workout_prompt, plans.clean_workout, x, plans.fallback_workout, "plan")
+
+
+@app.post("/api/food")
+def food_plan():
+    if limited("plan", 20):
+        return err("Too many plans for now. Try again later.", 429)
+    x = plans.food_inputs(request.get_json(silent=True) or {})
+    return ai_plan(plans.food_prompt, plans.clean_food, x, plans.fallback_food, "plan")
 
 
 @app.post("/api/challenge")

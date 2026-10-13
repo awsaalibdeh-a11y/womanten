@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0b0b0d">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="manifest" href="/manifest.webmanifest">
 <title>Womanten</title>
 <meta name="description" content="A confidence and habits coach: a weekly plan, habits, gentle movement, a focus timer, an AI coach and challenges with friends. Private, and never about your looks.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%2314141a'/%3E%3Ccircle cx='32' cy='32' r='14' fill='none' stroke='%23e48fcf' stroke-width='5'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23141414'/%3E%3Ccircle cx='32' cy='32' r='14' fill='none' stroke='%23e8998d' stroke-width='5'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
@@ -21,10 +22,34 @@
     <div class="bar"><div id="barfill"></div></div>
     <p class="muted tiny" id="barlabel"></p>
 
+
+    <div class="card lockbox" id="lockCard">
+      <h2>&#128274; Lock your scrolling apps</h2>
+      <p class="hint" id="lockSub">TikTok, Instagram and YouTube stay locked until you do a push-up on camera. Each push-up earns you 10 scrolls.</p>
+      <div id="lockWeb">
+        <ol class="steps"><li>Install the Womanten Android app.</li><li>Choose which apps to lock.</li><li>Open one and it asks for a push-up first.</li></ol>
+        <a class="btnlink" href="/download">Get the Android app</a>
+      </div>
+      <div id="lockApp" hidden>
+        <div class="big" id="lockScrolls">0 scrolls left</div>
+        <div class="pills"><button id="lockOpen">Set up and manage locks</button><button class="ghost" id="lockPush">Do push-ups now</button></div>
+      </div>
+    </div>
+
     <div class="card" id="planCard">
       <div class="row"><h2>Today's plan</h2><button class="ghost" id="buildWeek">Build my week</button></div>
       <div id="slots"></div>
       <details id="weekAll"><summary>See the whole week</summary><div id="weekList"></div></details>
+    </div>
+
+    <div class="card" id="workoutCard">
+      <div class="row"><h2>&#127947;&#65039; Workout plan</h2><button class="ghost" id="woMake">Make my plan</button></div>
+      <div id="woBody"></div>
+    </div>
+
+    <div class="card" id="foodCard">
+      <div class="row"><h2>&#127858; Food plan</h2><button class="ghost" id="fdMake">Make my plan</button></div>
+      <div id="fdBody"></div>
     </div>
 
     <div class="card">
@@ -43,9 +68,19 @@
 
     <div class="card">
       <h2>How are you today?</h2>
+      <p class="hint">Tap the face that fits. Then track two things that make a big difference:</p>
       <div class="moods" id="moods"></div>
-      <div class="row2"><div class="stepper"><span>&#128167; Water</span><button id="wMinus">&minus;</button><b id="water">0</b><button id="wPlus">+</button></div>
-        <div class="stepper"><span>&#127769; Sleep</span><button id="sMinus">&minus;</button><b id="sleep">0</b><button id="sPlus">+</button></div></div>
+      <div class="meter">
+        <div class="m"><div class="mt"><div><b class="t">&#128167; Water</b><div class="goal" id="waterGoal">Goal: 8 glasses a day</div></div><div class="ctl"><button id="wMinus" aria-label="One less glass">&minus;</button><output id="water">0</output><button id="wPlus" aria-label="One more glass">+</button></div></div><p class="hint" style="margin:8px 0 0">Tap + each time you finish a glass of water (about 250 ml).</p><div class="mbar"><i id="waterBar"></i></div></div>
+        <div class="m"><div class="mt"><div><b class="t">&#127769; Sleep</b><div class="goal" id="sleepGoal">Goal: 8 hours a night</div></div><div class="ctl"><button id="sMinus" aria-label="One less hour">&minus;</button><output id="sleep">0</output><button id="sPlus" aria-label="One more hour">+</button></div></div><p class="hint" style="margin:8px 0 0">Tap + for each hour you slept last night. Do this once in the morning.</p><div class="mbar"><i id="sleepBar"></i></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>To-do today</h2>
+      <p class="hint">Real things you need to get done. Each one you finish is +5 points.</p>
+      <div id="todos"></div>
+      <form class="send" id="todoForm"><input id="todoIn" maxlength="80" placeholder="Add a task" autocomplete="off"><button>Add</button></form>
     </div>
 
     <div class="card" id="focusCard">
@@ -61,6 +96,29 @@
     </div>
 
     <div class="card"><h2>This week</h2><div id="review"></div></div>
+
+    <div class="card more"><details id="moreBox"><summary>More tools</summary>
+      <h2 style="margin-top:14px">Journal</h2>
+      <p class="hint" id="jPrompt"></p>
+      <textarea id="jText" maxlength="600" placeholder="Write a few lines. Only you can see this."></textarea>
+      <div class="row2"><button id="jSave">Save entry</button></div>
+      <div id="jList"></div>
+
+      <h2 style="margin-top:22px">Cycle tracker</h2>
+      <p class="hint">Private, and only on this device. These are estimates, not medical advice. If something worries you, talk to a doctor or a trusted adult.</p>
+      <div id="cycBody"></div>
+      <div class="pills"><button id="cycStart">My period started today</button><button class="ghost" id="cycUndo">Undo last</button></div>
+
+      <h2 style="margin-top:22px">Breathe</h2>
+      <p class="hint">Four slow breaths to calm down. In for 4, hold 4, out for 4, hold 4.</p>
+      <div class="breathe"><div class="circle" id="circle"></div><div id="bLabel" class="muted">Ready when you are</div><div class="pills" style="justify-content:center"><button id="bGo">Start breathing</button></div></div>
+
+      <h2 style="margin-top:22px">Back up your data</h2>
+      <p class="hint">Your plan, habits and journal live only on this device. Save a copy so you never lose them.</p>
+      <div class="pills"><button class="ghost" id="bkSave">Save a backup</button><button class="ghost" id="bkLoad">Restore a backup</button><button class="ghost" id="bkReset">Erase everything</button></div>
+      <input type="file" id="bkFile" accept="application/json" hidden>
+    </details></div>
+
   </section>
 
   <section id="tab-coach" class="tab">
@@ -92,9 +150,11 @@
   <button id="obGo">Let's go</button>
 </div></div>
 
+<div id="pform" class="sheet" hidden><div class="panel" id="pformBox"></div></div>
 <div id="toast" class="toast" hidden></div>
 <script>window.WM = { ai: {{ 'true' if ai else 'false' }} };</script>
 <script src="/static/app.js"></script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(function () {});</script>
 <script src="/static/hub.js" data-app="womanten" defer></script>
 </body>
 </html>

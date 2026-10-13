@@ -51,6 +51,62 @@ class Basics(unittest.TestCase):
         self.assertEqual(self.c.post("/api/coach", json={"messages": [{"role": "user", "text": "hi"}]}).status_code, 429)
 
 
+class Plans(unittest.TestCase):
+    def setUp(self):
+        os.environ.pop("OPENAI_API_KEY", None)
+        womanten._hits.clear()
+        self.c = womanten.app.test_client()
+
+    def test_workout_has_seven_days_and_the_right_number_of_training_days(self):
+        d = self.c.post("/api/workout", json={"days": 4, "goal": "strength", "minutes": 30}).get_json()
+        self.assertEqual(len(d["plan"]), 7)
+        self.assertEqual(sum(1 for x in d["plan"] if not x["rest"]), 4)
+        self.assertTrue(all(x["exercises"] for x in d["plan"] if not x["rest"]))
+
+    def test_workout_inputs_are_clamped_and_cleaned(self):
+        x = womanten.plans.workout_inputs({"days": 99, "minutes": 1, "level": "<b>", "notes": "x" * 500})
+        self.assertEqual((x["days"], x["minutes"], x["level"]), (6, 10, "beginner"))
+        self.assertEqual(len(x["notes"]), 120)
+
+    def test_food_plan_is_balanced_and_has_a_shopping_list(self):
+        d = self.c.post("/api/food", json={"diet": "everything"}).get_json()
+        self.assertEqual(len(d["plan"]["days"]), 7)
+        self.assertTrue(d["plan"]["shopping"] and d["plan"]["tips"])
+
+    def test_vegetarian_plan_has_no_meat(self):
+        d = self.c.post("/api/food", json={"diet": "vegetarian"}).get_json()
+        text = " ".join(m for day in d["plan"]["days"] for m in day.values()).lower()
+        for w in ("chicken", "beef", "tuna", "fish"):
+            self.assertNotIn(w, text)
+
+    def test_vegan_plan_has_no_animal_products(self):
+        d = self.c.post("/api/food", json={"diet": "vegan"}).get_json()
+        text = " ".join(m for day in d["plan"]["days"] for m in day.values()).lower()
+        for w in ("chicken", "beef", "tuna", "egg", "cheese", "yoghurt", "milk"):
+            self.assertNotIn(w, text)
+
+    def test_allergies_are_respected_in_the_fallback(self):
+        d = self.c.post("/api/food", json={"diet": "everything", "allergies": "nuts, eggs"}).get_json()
+        text = " ".join(m for day in d["plan"]["days"] for m in day.values()).lower()
+        self.assertNotIn("nuts", text)
+        self.assertNotIn("eggs", text)
+
+    def test_rules_forbid_calories_and_weight_loss(self):
+        for w in ("calorie", "losing weight", "fasting"):
+            self.assertIn(w, womanten.plans.PLAN_RULES)
+
+    def test_no_calorie_or_weight_loss_talk_in_the_builtin_plans(self):
+        text = str(womanten.plans.MEALS).lower() + str(womanten.plans.MOVES).lower()
+        for w in ("calorie", "lose weight", "fat burn", "slim", "diet"):
+            self.assertNotIn(w, text)
+
+    def test_bad_ai_output_falls_back(self):
+        with self.assertRaises(Exception):
+            womanten.plans.clean_food('{"days":[]}', {})
+        with self.assertRaises(Exception):
+            womanten.plans.clean_workout('{"days":[{"day":"Mon"}]}', {})
+
+
 class Challenges(unittest.TestCase):
     def setUp(self):
         womanten._hits.clear()

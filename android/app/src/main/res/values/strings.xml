@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lock_service_desc">Womanten sees which app is open and counts your scrolls in the apps you chose, so it can lock them until you do a push-up. It never reads what is on your screen, your messages or your passwords.</string>
+</resources>
