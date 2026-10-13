@@ -201,6 +201,29 @@ class Support(unittest.TestCase):
                 fn(raw)
 
 
+class Recipe(unittest.TestCase):
+    def setUp(self):
+        os.environ.pop("OPENAI_API_KEY", None)
+        womanten._hits.clear()
+        self.c = womanten.app.test_client()
+
+    def test_recipe_has_ingredients_and_steps(self):
+        r = self.c.post("/api/recipe", json={"meal": "Lentil and tomato stew with brown rice", "diet": "vegan"}).get_json()["recipe"]
+        self.assertTrue(r["title"] and len(r["ingredients"]) >= 2 and len(r["steps"]) >= 2)
+
+    def test_recipe_needs_a_meal(self):
+        self.assertEqual(self.c.post("/api/recipe", json={"meal": ""}).status_code, 400)
+
+    def test_bad_ai_recipe_is_rejected(self):
+        with self.assertRaises(Exception):
+            womanten.plans.clean_recipe('{"title":"x","ingredients":["a"],"steps":["b"]}')
+
+    def test_recipe_text_has_no_diet_talk(self):
+        text = str(womanten.plans.fallback_recipe("Oats")).lower()
+        for w in ("calorie", "weight", "diet"):
+            self.assertNotIn(w, text)
+
+
 class Challenges(unittest.TestCase):
     def setUp(self):
         womanten._hits.clear()

@@ -10,7 +10,7 @@ const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 /* ---------- storage: everything personal stays in this browser ---------- */
 const KEY = "womanten.v1";
 let S = load();
-function fresh() { return { name: "", focus: [], week: [], done: {}, habits: [], workouts: [], checks: {}, chat: [], pid: rid(), challenges: [], bonus: 0, todos: [], journal: [], workout: null, food: null, shop: {}, cycle: [], woDone: {}, braveDone: {}, routinesDone: [], study: [], goals: [], wins: [], conf: [], capsules: [], mealsDone: {} }; }
+function fresh() { return { name: "", focus: [], week: [], done: {}, habits: [], workouts: [], checks: {}, chat: [], pid: rid(), challenges: [], bonus: 0, todos: [], journal: [], workout: null, food: null, shop: {}, cycle: [], woDone: {}, braveDone: {}, routinesDone: [], study: [], goals: [], wins: [], conf: [], capsules: [], mealsDone: {}, lessons: {}, accent: "coral", resets: [] }; }
 function load() { try { return Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) { return fresh(); } }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* private mode: still works for this visit */ } }
 function rid() { const a = new Uint8Array(10); (window.crypto || {}).getRandomValues ? crypto.getRandomValues(a) : a.forEach((_, i) => a[i] = Math.random() * 256); return [...a].map(b => (b % 36).toString(36)).join(""); }
@@ -39,6 +39,8 @@ function activeDays() {
   (S.wins || []).forEach(w => set.add(w.date));
   Object.keys(S.mealsDone || {}).forEach(d => { if ((S.mealsDone[d] || []).length) set.add(d); });
   (S.conf || []).forEach(c => set.add(c.date));
+  Object.values(S.lessons || {}).forEach(d => set.add(d));
+  (S.resets || []).forEach(r => set.add(r));
   Object.keys(S.checks).forEach(d => { if (S.checks[d].mood != null) set.add(d); });
   return set;
 }
@@ -59,7 +61,7 @@ function points() {
   const habits = S.habits.reduce((a, h) => a + h.days.length, 0);
   const mins = S.workouts.reduce((a, w) => a + w.min, 0);
   const todos = S.todos.filter(t => t.done).length;
-  return tasks * 10 + Object.keys(S.woDone || {}).length * 15 + habits * 5 + todos * 5 + S.journal.length * 3 + Object.keys(S.braveDone || {}).length * 2 + (S.routinesDone || []).length + Object.values(S.mealsDone || {}).reduce((a, l) => a + l.length, 0) * 2 + (S.conf || []).length * 3 + Math.floor((S.wins || []).length / 2) + Math.floor((S.study || []).reduce((a, x) => a + x.min, 0) / 5) + Math.floor(mins / 5) + S.bonus;
+  return tasks * 10 + Object.keys(S.woDone || {}).length * 15 + habits * 5 + todos * 5 + S.journal.length * 3 + Object.keys(S.braveDone || {}).length * 2 + (S.routinesDone || []).length + Object.values(S.mealsDone || {}).reduce((a, l) => a + l.length, 0) * 2 + (S.conf || []).length * 3 + Object.keys(S.lessons || {}).length * 5 + (S.resets || []).length * 3 + Math.floor((S.wins || []).length / 2) + Math.floor((S.study || []).reduce((a, x) => a + x.min, 0) / 5) + Math.floor(mins / 5) + S.bonus;
 }
 
 /* ---------- Today ---------- */
@@ -101,7 +103,7 @@ function hStreak(h) { let n = 0; const d = new Date(); if (!h.days.includes(dstr
 function renderHabits() {
   const t = today();
   $("habits").innerHTML = S.habits.length ? S.habits.map(h => `<div class="habit"><button class="tick ${h.days.includes(t) ? "on" : ""}" data-h="${h.id}" aria-label="Check in">✓</button>
-    <div class="nm">${esc(h.name)}<small>${hStreak(h)} day streak</small><div class="dots">${last7().map(d => `<span class="${h.days.includes(d) ? "on" : ""}"></span>`).join("")}</div></div><button class="x" data-del="${h.id}" aria-label="Remove">×</button></div>`).join("")
+    <div class="nm">${esc(h.name)}<small>${hStreak(h)} day streak · best ${hBest(h)} · ${hRate(h)}% of the last 30 days</small><div class="dots">${last7().map(d => `<span class="${h.days.includes(d) ? "on" : ""}"></span>`).join("")}</div></div><button class="x" data-del="${h.id}" aria-label="Remove">×</button></div>`).join("")
     : `<p class="muted">Add something small you want to do every day, like reading for 10 minutes.</p>`;
 }
 $("habits").addEventListener("click", e => {
@@ -274,7 +276,7 @@ const NATIVE = window.WomantenNative || null;
 if (NATIVE_FOCUS()) $("focusNote").textContent = "Real focus: your locked apps are blocked until the timer ends. To leave early you have to earn it with 10 reps on camera.";
 function renderLock() {
   if (!NATIVE) return; $("lockWeb").hidden = true; $("lockApp").hidden = false;
-  try { const i = JSON.parse(NATIVE.lockInfo()); $("lockScrolls").textContent = i.enabled ? (i.scrolls > 0 ? i.scrolls + " " + (i.currency || "scrolls") + " left" : "Locked: do " + (i.exercise || "push-ups").toLowerCase()) : "Locks are off"; $("lockSub").textContent = i.enabled ? "Locked: " + (i.apps.length ? i.apps.join(", ") : "no apps chosen yet") + ". Each " + (i.unit || "push-up") + " earns " + i.perPushup + " " + (i.currency || "scrolls") + "." : "Turn the locks on to start. Each rep earns " + (i.currency || "scrolls") + " on the apps you choose."; } catch (e) { /* older app */ }
+  try { const i = JSON.parse(NATIVE.lockInfo()); $("lockScrolls").textContent = i.enabled ? (i.scrolls > 0 ? i.scrolls + " " + (i.currency || "scrolls") + " left" : "Locked: do " + (i.exercise || "push-ups").toLowerCase()) : "Locks are off"; $("lockSub").textContent = (i.enabled ? "Locked: " + (i.apps.length ? i.apps.join(", ") : "no apps chosen yet") + ". Each " + (i.unit || "push-up") + " earns " + i.perPushup + " " + (i.currency || "scrolls") + "." : "Turn the locks on to start. Each rep earns " + (i.currency || "scrolls") + " on the apps you choose.") + (i.repsToday != null && i.enabled ? "  Today: " + i.repsToday + " reps, " + (i.usedToday || 0) + " " + (i.currency || "scrolls") + " used." : ""); } catch (e) { /* older app */ }
 }
 $("lockOpen").onclick = () => NATIVE && NATIVE.openLock();
 $("lockPush").onclick = () => NATIVE && NATIVE.openPushups();
@@ -329,11 +331,11 @@ function renderFood() {
   const f = S.food;
   $("fdMake").textContent = f ? "Change plan" : "Make my plan";
   if (!f) { $("fdBody").innerHTML = `<p class="muted">Tell me how you eat and what you do not like, and the AI will plan a week of balanced meals and a shopping list. No calorie counting, ever.</p>`; return; }
-  const t = todayRow(f.plan.days), eaten = S.mealsDone[today()] || [], meals = (d, tick) => [["breakfast", "Breakfast"], ["lunch", "Lunch"], ["dinner", "Dinner"], ["snack", "Snack"]].filter(([k]) => d[k]).map(([k, l]) => `<div class="meal"><b>${l}</b><span>${esc(d[k])}</span>${tick ? `<button class="tick ${eaten.includes(k) ? "on" : ""}" data-meal="${k}" aria-label="I had this">✓</button>` : ""}</div>`).join("");
+  const t = todayRow(f.plan.days), eaten = S.mealsDone[today()] || [], meals = (d, tick) => [["breakfast", "Breakfast"], ["lunch", "Lunch"], ["dinner", "Dinner"], ["snack", "Snack"]].filter(([k]) => d[k]).map(([k, l]) => `<div class="meal"><b>${l}</b><span>${esc(d[k])}</span>${tick ? `<button class="rb" data-recipe="${k}" aria-label="How to make it" title="How to make it">📖</button><button class="tick ${eaten.includes(k) ? "on" : ""}" data-meal="${k}" aria-label="I had this">✓</button>` : ""}</div>`).join("");
   const shop = f.plan.shopping.map((it, i) => `<label><input type="checkbox" data-shop="${i}" ${S.shop[i] ? "checked" : ""}><span class="${S.shop[i] ? "got" : ""}">${esc(it)}</span></label>`).join("");
   $("fdBody").innerHTML = `<p class="hint">Today, ${esc(t.day)}. Tap the tick when you have eaten a meal (+2).</p>${meals(t, true)}`
     + `<details><summary>See the whole week</summary>${f.plan.days.map(d => `<div class="day"><h3>${d.day}</h3>${meals(d, false)}</div>`).join("")}</details>`
-    + `<details><summary>Shopping list (${f.plan.shopping.filter((_, i) => !S.shop[i]).length} to get)</summary><div class="shop">${shop}</div></details>`
+    + `<details><summary>Shopping list (${f.plan.shopping.filter((_, i) => !S.shop[i]).length} to get)</summary><div class="shop">${shop}</div><form class="send" id="shopForm" style="margin-top:8px"><input id="shopIn" maxlength="40" placeholder="Add an item" autocomplete="off"><button>Add</button></form><div class="pills"><button class="ghost" data-clear="1">Clear ticked items</button></div></details>`
     + (f.plan.tips.length ? `<details><summary>Tips</summary>${f.plan.tips.map(x => `<p class="muted tiny" style="margin-top:6px">• ${esc(x)}</p>`).join("")}</details>` : "")
     + `<p class="note">${f.ai ? "Made by AI for you." : "A starter plan."} Balanced eating, not a diet.</p>`;
 }
@@ -361,7 +363,7 @@ const BADGES = [
   ["📓", "5 journal entries", () => S.journal.length >= 5], ["💧", "Hydrated: 8 glasses", () => Object.values(S.checks).some(c => c.water >= 8)],
   ["😴", "Well rested: 8 hours", () => Object.values(S.checks).some(c => c.sleep >= 8)], ["🗓️", "Built a plan", () => S.week.length === 7],
   ["🏋️", "AI workout plan", () => !!S.workout], ["🥗", "AI food plan", () => !!S.food], ["🤝", "Joined a challenge", () => S.challenges.length > 0],
-  ["🎯", "50 points", () => points() >= 50], ["🦁", "10 brave dares", () => Object.keys(S.braveDone).length >= 10], ["🏆", "5 wins", () => S.wins.length >= 5], ["🧘", "3 routines", () => S.routinesDone.length >= 3], ["📚", "100 minutes studied", () => S.study.reduce((a, x) => a + x.min, 0) >= 100], ["🚀", "500 points", () => points() >= 500],
+  ["🎯", "50 points", () => points() >= 50], ["🎓", "5 lessons learned", () => Object.keys(S.lessons || {}).length >= 5], ["♻️", "Weekly reset", () => (S.resets || []).length >= 1], ["🦁", "10 brave dares", () => Object.keys(S.braveDone).length >= 10], ["🏆", "5 wins", () => S.wins.length >= 5], ["🧘", "3 routines", () => S.routinesDone.length >= 3], ["📚", "100 minutes studied", () => S.study.reduce((a, x) => a + x.min, 0) >= 100], ["🚀", "500 points", () => points() >= 500],
 ];
 function renderLevel() {
   const pts = points(), lv = Math.floor(Math.sqrt(pts / 25)) + 1, base = 25 * (lv - 1) ** 2, next = 25 * lv ** 2;
@@ -585,7 +587,243 @@ function renderSaver() {
   const n = streak(), s = $("saver"), doneToday = activeDays().has(today());
   if (n > 0 && !doneToday) { s.hidden = false; s.innerHTML = `🔥 Keep your <b>${n} day streak</b> alive: do one small thing today. Tick a plan step, log a win, or take a 2 minute breath.`; } else s.hidden = true;
 }
-function renderAll() { renderSaver(); renderConf(); renderCapsules(); renderBed(); renderTags(); renderDare(); renderRoutines(); renderStudy(); renderGoals(); renderWins(); renderShare(); renderLevel(); renderInsights(); renderWorkout(); renderFood(); renderCycle(); renderTop(); renderSlots(); renderHabits(); renderMove(); renderCheck(); renderReview(); renderTodos(); renderJournal(); }
+
+/* ================= round 4: lessons, workout player, recipes, heatmap, privacy, sounds, themes and more ================= */
+
+/* ---------- accent colours (no blue) ---------- */
+const ACCENTS = { coral: ["#e8998d", "#6e3b34"], peach: ["#efb48a", "#6b4a30"], sage: ["#9fcf9f", "#35523a"], lilac: ["#c5a3e8", "#4d3a6b"], gold: ["#e3c36a", "#5e5028"], rose: ["#e68fb2", "#6b3450"] };
+function applyAccent() { const a = ACCENTS[S.accent] || ACCENTS.coral; document.documentElement.style.setProperty("--rose", a[0]); document.documentElement.style.setProperty("--rose2", a[1]); }
+function renderLook() {
+  $("lookBody").innerHTML = `<div class="inner"><p class="hint">Pick the colour you like.</p><div class="swatches">${Object.entries(ACCENTS).map(([k, c]) => `<button class="sw ${S.accent === k ? "on" : ""}" data-ac="${k}" style="background:${c[0]}" aria-label="${k}" title="${k}"></button>`).join("")}</div></div>`;
+}
+$("lookBody").addEventListener("click", e => { const b = e.target.closest("[data-ac]"); if (!b) return; S.accent = b.dataset.ac; save(); applyAccent(); renderLook(); });
+applyAccent();
+
+/* ---------- activity heatmap and best streak ---------- */
+function dayScore(d) {
+  const c = S.checks[d] || {};
+  return (S.done[d] || []).length + S.habits.filter(h => h.days.includes(d)).length + S.workouts.filter(w => w.date === d).length + (c.mood != null ? 1 : 0) + S.wins.filter(w => w.date === d).length
+    + S.journal.filter(j => j.date === d).length + S.todos.filter(t => t.done && t.date === d).length + (S.braveDone[d] !== undefined ? 1 : 0) + S.routinesDone.filter(r => r.date === d).length
+    + S.study.filter(x => x.date === d).length + (S.mealsDone[d] || []).length + (S.woDone[d] ? 1 : 0);
+}
+function bestStreak() { const set = activeDays(), days = [...set].sort(); let best = 0, run = 0, prev = null; days.forEach(d => { if (prev) { const gap = Math.round((new Date(d) - new Date(prev)) / 86400000); run = gap === 1 ? run + 1 : 1; } else run = 1; best = Math.max(best, run); prev = d; }); return best; }
+function renderHeat() {
+  const cell = 14, gap = 3, weeks = 12, w = weeks * (cell + gap), h = 7 * (cell + gap);
+  const end = new Date(); const dow = (end.getDay() + 6) % 7; let rects = "", active = 0;
+  for (let wk = 0; wk < weeks; wk++) for (let dy = 0; dy < 7; dy++) {
+    const d = new Date(end); d.setDate(end.getDate() - dow - (weeks - 1 - wk) * 7 + dy); if (d > end) continue;
+    const sc = dayScore(dstr(d)); if (sc) active++;
+    rects += `<rect class="${sc >= 4 ? "l3" : sc >= 2 ? "l2" : sc >= 1 ? "l1" : ""}" x="${wk * (cell + gap)}" y="${dy * (cell + gap)}" width="${cell}" height="${cell}" rx="3"><title>${dstr(d)}: ${sc} things</title></rect>`;
+  }
+  $("heat").innerHTML = `<svg class="heat" viewBox="0 0 ${w} ${h}" role="img" aria-label="Activity over the last 12 weeks">${rects}</svg><p class="prog">Active on ${active} ${active === 1 ? "day" : "days"} in the last 12 weeks · best streak ever: ${bestStreak()} ${bestStreak() === 1 ? "day" : "days"}</p>`;
+}
+
+/* ---------- habit stats ---------- */
+function hBest(h) { const days = [...h.days].sort(); let best = 0, run = 0, prev = null; days.forEach(d => { run = prev && Math.round((new Date(d) - new Date(prev)) / 86400000) === 1 ? run + 1 : 1; best = Math.max(best, run); prev = d; }); return best; }
+function hRate(h) { const set = new Set(lastDays(30)); return Math.round(h.days.filter(d => set.has(d)).length / 30 * 100); }
+
+/* ---------- on this day ---------- */
+function renderMemory() {
+  const offs = [[7, "a week ago"], [30, "a month ago"], [90, "3 months ago"], [180, "6 months ago"], [365, "a year ago"]];
+  for (const [n, label] of offs) {
+    const d = new Date(); d.setDate(d.getDate() - n); const k = dstr(d), items = S.journal.filter(j => j.date === k).map(j => "wrote: " + j.text).concat(S.wins.filter(w => w.date === k).map(w => "were proud that you " + w.text.replace(/^i am proud that i\s*/i, "")));
+    if (items.length) { $("memory").textContent = "🕰️ " + label[0].toUpperCase() + label.slice(1) + " you " + items[0].slice(0, 140); return; }
+  }
+  $("memory").textContent = "";
+}
+
+/* ---------- confidence lessons ---------- */
+const LESSONS = [
+  { id: "skill", icon: "🌱", t: "Confidence is a skill", p: ["Confidence is not a feeling you wait for. It is what you build by doing small things that feel a bit scary and noticing that you survived them.", "Each time you act while nervous, your brain updates its guess about what is safe. That is why small steps work better than big leaps."], tryIt: "Do one tiny scary thing today, like asking a question out loud." },
+  { id: "body", icon: "🧍", t: "Body language that helps", p: ["Stand or sit with your shoulders back and your chin level. Take up the space you need. Slow your movements and your speech by a little.", "Your body and mind talk to each other. Standing tall for a minute can make you feel steadier, and it also changes how others read you."], tryIt: "Before your next conversation, relax your shoulders and take one slow breath out." },
+  { id: "smalltalk", icon: "💬", t: "Starting a conversation", p: ["You do not need a clever line. Ask a simple open question about something you share: the class, the weather, the food, the game.", "Then listen to the answer and ask one follow-up. People remember feeling listened to far more than they remember what you said."], tryIt: "Ask one person an open question today, and one follow-up." },
+  { id: "nerves", icon: "🌬️", t: "Handling nerves", p: ["Nerves and excitement feel almost the same in the body: a fast heart, quick breath. You can tell yourself 'I am excited' instead of 'I am scared'.", "Breathe out longer than you breathe in, for example in for 4 and out for 6. It slows your heart rate within a minute."], tryIt: "Try three slow breaths, in for 4 and out for 6, before something that makes you nervous." },
+  { id: "no", icon: "🛑", t: "Saying no kindly", p: ["A good no is short and warm: 'Thanks for asking, but I cannot do that.' You do not need a long excuse. Explaining a lot makes it easier for people to argue.", "Saying no to something protects your yes for the things you care about."], tryIt: "Practise saying 'No, thank you' out loud once, calmly." },
+  { id: "kind", icon: "🤍", t: "Being kind to yourself", p: ["Most of us speak to ourselves in a way we would never speak to a friend. Self-kindness is not weakness. People who are kinder to themselves try again faster after a mistake.", "When you notice a harsh thought, ask: what would I say to a friend who felt this way?"], tryIt: "Write down one harsh thought and answer it the way you would answer a friend." },
+  { id: "speak", icon: "🙋", t: "Speaking up in a group", p: ["Plan one sentence before you talk. Speak a little slower than feels natural and look at one friendly face. You can start with 'I think...' or 'One idea is...'.", "The first time is the hardest. After that it gets easier, because you have proof that nothing terrible happens."], tryIt: "Share one thought in your next group conversation, even a short one." },
+  { id: "criticism", icon: "📝", t: "Handling criticism", p: ["Pause before you answer. Ask yourself: is any of this useful? Take the useful part and leave the rest. Feedback is about what you did, not about who you are.", "If it is unkind or unfair, you can say 'I will think about that' and move on."], tryIt: "Next time you get feedback, say 'Thank you, I will think about it' before reacting." },
+  { id: "rejection", icon: "🧱", t: "Dealing with rejection", p: ["Everyone gets turned down, including people who seem very confident. A no usually says more about timing and fit than about your worth.", "Let yourself feel it, then ask what you can learn, and do one small thing to move forward."], tryIt: "Think of a past no that turned out fine, and write down what it taught you." },
+  { id: "boundaries", icon: "🧭", t: "Setting boundaries with friends", p: ["A boundary is telling people what you are okay with. Say it calmly and early: 'I am not comfortable with that' or 'I need some time to myself tonight'.", "Good friends respect boundaries. If someone keeps ignoring them, that tells you something important."], tryIt: "Name one thing you need more of or less of from a friend, and think how you would say it kindly." },
+];
+let lessonOpen = null;
+function renderLessons() {
+  if (lessonOpen) return openLesson(lessonOpen);
+  const done = Object.keys(S.lessons || {}).length;
+  $("lessonBody").innerHTML = `<div class="inner"><p class="hint">Ten short lessons, about 2 minutes each. ${done} of ${LESSONS.length} learned.</p>${LESSONS.map(l => `<div class="lesson" data-ls="${l.id}"><span style="font-size:22px">${l.icon}</span><div class="t">${esc(l.t)}<small>${S.lessons[l.id] ? "Learned ✓" : "About 2 minutes"}</small></div><span class="muted">›</span></div>`).join("")}</div>`;
+}
+function openLesson(id) {
+  const l = LESSONS.find(x => x.id === id); lessonOpen = id; const done = !!S.lessons[id];
+  $("lessonBody").innerHTML = `<div class="inner lbody"><button class="ghost" id="lsBack">‹ All lessons</button><h3 style="margin-top:12px">${l.icon} ${esc(l.t)}</h3>${l.p.map(x => `<p>${esc(x)}</p>`).join("")}<div class="try"><b>Try it:</b> ${esc(l.tryIt)}</div><div class="pills"><button id="lsDone" ${done ? "disabled" : ""}>${done ? "Learned ✓" : "I learned this (+5)"}</button></div></div>`;
+  $("lsBack").onclick = () => { lessonOpen = null; renderLessons(); };
+  $("lsDone").onclick = () => { S.lessons[id] = today(); lessonOpen = null; save(); toast("Nice! +5 points"); renderAll(); };
+}
+$("lessonBody").addEventListener("click", e => { const r = e.target.closest("[data-ls]"); if (r) openLesson(r.dataset.ls); });
+
+/* ---------- weekly reset wizard ---------- */
+const RESET_Q = ["What went well this week?", "What was hard, and what did it teach you?", "What is one thing you want to do differently next week?", "Your top 3 intentions for next week (one per line)"];
+function renderReset() {
+  const when = (S.resets || []).slice(-1)[0];
+  $("resetBody").innerHTML = `<div class="inner"><p class="hint">A 3 minute look back and a look ahead. Best on a Sunday.${when ? " Last reset: " + esc(when) + "." : ""}</p><div class="pills"><button id="rsGo">Start my weekly reset</button></div></div>`;
+  $("rsGo").onclick = () => runReset();
+}
+function runReset() {
+  const ans = []; let i = 0;
+  const show = () => {
+    $("pformBox").innerHTML = `<h2>Weekly reset</h2><p class="muted tiny">Question ${i + 1} of ${RESET_Q.length}</p><label class="l" for="rsA">${RESET_Q[i]}</label><textarea id="rsA" maxlength="400" placeholder="Write a few words"></textarea><div class="row2"><button id="rsNext">${i === RESET_Q.length - 1 ? "Finish" : "Next"}</button><button class="ghost" id="rsX">Cancel</button></div>`; $("pform").hidden = false; $("rsA").focus();
+    $("rsX").onclick = () => { $("pform").hidden = true; };
+    $("rsNext").onclick = () => { ans[i] = $("rsA").value.trim(); i++; if (i < RESET_Q.length) return show();
+      S.journal.push({ date: today(), text: ("Weekly reset. Went well: " + (ans[0] || "-") + " | Hard: " + (ans[1] || "-") + " | Different: " + (ans[2] || "-")).slice(0, 600) });
+      (ans[3] || "").split(/\n+/).map(x => x.trim()).filter(Boolean).slice(0, 3).forEach(t => S.todos.push({ id: rid(), text: t.slice(0, 80), done: false, date: today() }));
+      S.resets.push(today()); save(); $("pform").hidden = true; toast("Reset done. Your intentions are in your to-do list."); renderAll(); };
+  };
+  show();
+}
+
+/* ---------- guided workout player ---------- */
+function parseDetail(d) {
+  const t = String(d || ""); let sets = 1, secs = 0, reps = 0, m;
+  if ((m = t.match(/(\d+)\s*x\s*(\d+)\s*(seconds?|secs?)/i))) { sets = +m[1]; secs = +m[2]; }
+  else if ((m = t.match(/(\d+)\s*x\s*(\d+)/i))) { sets = +m[1]; reps = +m[2]; }
+  else if ((m = t.match(/(\d+)\s*(minutes?|mins?)/i))) secs = +m[1] * 60;
+  else if ((m = t.match(/(\d+)\s*(seconds?|secs?)/i))) secs = +m[1];
+  return { sets: Math.min(sets, 6), secs, reps };
+}
+function startPlayer() {
+  const w = S.workout; const day = w && todayRow(w.plan); if (!day || day.rest) return toast("Today is a rest day");
+  const steps = []; day.exercises.forEach(e => { const p = parseDetail(e.detail); for (let n = 1; n <= p.sets; n++) { steps.push({ name: e.name, tip: e.tip, set: n, sets: p.sets, secs: p.secs, reps: p.reps, detail: e.detail }); if (n < p.sets) steps.push({ rest: true, secs: 20 }); } steps.push({ rest: true, secs: 25, last: true }); });
+  steps.pop(); let i = 0, left = 0, t = null;
+  const end = (done) => { clearInterval(t); $("pform").hidden = true; if (done) { S.woDone = S.woDone || {}; S.woDone[today()] = 1; S.workouts.push({ date: today(), type: "Workout", min: +(w.inputs.minutes || 30) }); save(); toast("Workout complete! +15 points"); renderAll(); } };
+  const show = () => {
+    clearInterval(t); const st = steps[i]; if (!st) return end(true);
+    left = st.secs || 0;
+    $("pformBox").innerHTML = `<div class="player"><p class="muted tiny">Step ${i + 1} of ${steps.length}</p>` + (st.rest ? `<div class="nm">Rest</div><p class="muted">Shake it out and breathe.</p>` : `<div class="nm">${esc(st.name)}</div><div class="set">Set ${st.set} of ${st.sets}${st.reps ? ": " + st.reps + " reps" : ""}${st.secs ? ": " + st.secs + " seconds" : ""}</div><p class="muted tiny">${esc(st.tip || "")}</p>`)
+      + (st.secs ? `<div class="big" id="plClock">${fmt(left)}</div>` : "") + `<div class="row2" style="justify-content:center"><button id="plNext">${st.secs ? "Skip" : "Done"}</button><button class="ghost" id="plQuit">Stop</button></div></div>`;
+    $("pform").hidden = false; $("plNext").onclick = () => { i++; show(); }; $("plQuit").onclick = () => end(false);
+    if (st.secs) t = setInterval(() => { left--; const c = $("plClock"); if (c) c.textContent = fmt(Math.max(0, left)); if (left <= 0) { i++; show(); } }, 1000);
+  };
+  show();
+}
+const _renderWorkout = renderWorkout;
+renderWorkout = function () {
+  _renderWorkout();
+  const w = S.workout, t = w && todayRow(w.plan);
+  if (t && !t.rest && !$("woPlay")) { const row = document.querySelector("#woBody .row2"); const b = document.createElement("button"); b.id = "woPlay"; b.className = "ghost"; b.textContent = "▶ Guided workout"; b.onclick = startPlayer; if (row) row.appendChild(b); else $("woBody").insertBefore(b, $("woBody").firstChild.nextSibling); }
+};
+
+/* ---------- recipe helper, shopping list upgrades ---------- */
+$("fdBody").addEventListener("click", async e => {
+  const r = e.target.closest("[data-recipe]"), clr = e.target.closest("[data-clear]");
+  if (clr) { const f = S.food, keep = f.plan.shopping.filter((_, i) => !S.shop[i]); f.plan.shopping = keep; S.shop = {}; save(); renderFood(); return; }
+  if (!r) return;
+  const meal = (todayRow(S.food.plan.days) || {})[r.dataset.recipe]; if (!meal) return;
+  $("pformBox").innerHTML = `<h2>${esc(meal)}</h2><p class="muted">Writing a simple recipe…</p>`; $("pform").hidden = false;
+  try {
+    const d = await api("/api/recipe", { meal, diet: S.food.inputs.diet, allergies: S.food.inputs.allergies }), rc = d.recipe;
+    $("pformBox").innerHTML = `<div class="recipe"><h2>${esc(rc.title)}</h2><p class="meta">${esc(rc.time)} · serves ${esc(rc.serves)}</p><h3>Ingredients</h3><ul>${rc.ingredients.map(x => `<li>${esc(x)}</li>`).join("")}</ul><h3>Steps</h3><ol style="margin-left:18px">${rc.steps.map(x => `<li>${esc(x)}</li>`).join("")}</ol>${rc.tip ? `<p class="note">💡 ${esc(rc.tip)}</p>` : ""}<div class="row2"><button id="rcAdd">Add ingredients to my shopping list</button><button class="ghost" id="rcClose">Close</button></div></div>`;
+    $("rcClose").onclick = () => { $("pform").hidden = true; };
+    $("rcAdd").onclick = () => { const have = new Set(S.food.plan.shopping.map(x => x.toLowerCase())); rc.ingredients.forEach(x => { if (!have.has(x.toLowerCase())) S.food.plan.shopping.push(x.slice(0, 40)); }); save(); $("pform").hidden = true; toast("Added to your shopping list"); renderFood(); };
+  } catch (er) { $("pformBox").innerHTML = `<h2>${esc(meal)}</h2><p class="muted">${esc(er.message)}</p><button class="ghost" id="rcClose">Close</button>`; $("rcClose").onclick = () => { $("pform").hidden = true; }; }
+});
+$("fdBody").addEventListener("submit", e => { if (e.target.id !== "shopForm") return; e.preventDefault(); const v = $("shopIn").value.trim().slice(0, 40); if (!v) return; S.food.plan.shopping.push(v); save(); renderFood(); });
+
+/* ---------- breathing patterns ---------- */
+const PATTERNS = { box: { rounds: 4, ph: [["Breathe in…", 4, 1], ["Hold…", 4, 1], ["Breathe out…", 4, 0], ["Hold…", 4, 0]] }, "478": { rounds: 4, ph: [["Breathe in…", 4, 1], ["Hold…", 7, 1], ["Breathe out slowly…", 8, 0]] }, calm: { rounds: 6, ph: [["Breathe in…", 5, 1], ["Breathe out…", 5, 0]] } };
+let bT = null;
+function stopBreath(msg) { clearTimeout(bT); bT = null; $("circle").classList.remove("big"); $("circle").style.transitionDuration = ""; $("bLabel").textContent = msg || "Ready when you are"; $("bGo").textContent = "Start breathing"; }
+$("bGo").onclick = () => {
+  if (bT) return stopBreath();
+  const pat = PATTERNS[$("bPat").value] || PATTERNS.box; let step = 0, rounds = 0; $("bGo").textContent = "Stop";
+  const next = () => { const [txt, secs, big] = pat.ph[step % pat.ph.length]; $("bLabel").textContent = txt; $("circle").style.transitionDuration = secs + "s"; $("circle").classList.toggle("big", !!big); if (navigator.vibrate) navigator.vibrate(20);
+    step++; if (step % pat.ph.length === 0 && ++rounds >= pat.rounds) { bT = setTimeout(() => { stopBreath("Well done. Notice how you feel."); S.bonus += 3; save(); renderTop(); }, secs * 1000); return; }
+    bT = setTimeout(next, secs * 1000); };
+  next();
+};
+
+/* ---------- focus sounds (made in the browser, no files) ---------- */
+const Sound = { ctx: null, src: null, gain: null, kind: "off" };
+function soundBuffer(ctx, kind) {
+  const len = ctx.sampleRate * 4, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0); let last = 0;
+  for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; if (kind === "brown") { last = (last + 0.02 * w) / 1.02; d[i] = last * 3.5; } else d[i] = w * 0.6; }
+  return buf;
+}
+function setSound(kind) {
+  if (Sound.src) { try { Sound.src.stop(); } catch (e) { /* already stopped */ } Sound.src = null; }
+  Sound.kind = kind; if (kind === "off") return;
+  try {
+    Sound.ctx = Sound.ctx || new (window.AudioContext || window.webkitAudioContext)(); const ctx = Sound.ctx; if (ctx.state === "suspended") ctx.resume();
+    const src = ctx.createBufferSource(); src.buffer = soundBuffer(ctx, kind === "brown" ? "brown" : "white"); src.loop = true;
+    const gain = ctx.createGain(); gain.gain.value = +(($("sndVol") || {}).value || 0.5) * 0.4; Sound.gain = gain;
+    let node = src;
+    if (kind === "rain") { const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 900; const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 7000; node.connect(hp); hp.connect(lp); node = lp; }
+    if (kind === "fan") { const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 600; node.connect(lp); node = lp; }
+    node.connect(gain); gain.connect(ctx.destination); src.start(); Sound.src = src;
+  } catch (e) { toast("Sound is not available here"); }
+}
+function renderSound() {
+  $("soundBody").innerHTML = `<div class="inner"><p class="hint">Steady background sound can help you concentrate. It is generated on your device. Turn it on, then start a study or focus session.</p><div class="pills">${[["off", "Off"], ["brown", "Brown noise"], ["rain", "Soft rain"], ["fan", "Fan"]].map(([k, l]) => `<button data-snd="${k}" class="${Sound.kind === k ? "on" : ""}">${l}</button>`).join("")}</div><label class="l" for="sndVol" style="font-size:13px">Volume</label><input type="range" id="sndVol" min="0.1" max="1" step="0.05" value="0.5"></div>`;
+  $("sndVol").oninput = e => { if (Sound.gain) Sound.gain.gain.value = +e.target.value * 0.4; };
+}
+$("soundBody").addEventListener("click", e => { const b = e.target.closest("[data-snd]"); if (!b) return; setSound(b.dataset.snd); renderSound(); });
+
+/* ---------- privacy lock (PIN) ---------- */
+const PINKEY = "womanten.pin";
+async function pinHash(pin, salt) { const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(salt + ":" + pin)); return [...new Uint8Array(d)].map(x => x.toString(16).padStart(2, "0")).join(""); }
+function pinData() { try { return JSON.parse(localStorage.getItem(PINKEY) || "null"); } catch (e) { return null; } }
+let pinFails = 0, pinWait = 0, hiddenAt = 0;
+function showGate() { if (!pinData()) return; $("pinGate").hidden = false; $("pinIn").value = ""; $("pinMsg").textContent = "Enter your PIN to open."; setTimeout(() => $("pinIn").focus(), 50); }
+$("pinGo").onclick = async () => {
+  const p = pinData(); if (!p) { $("pinGate").hidden = true; return; }
+  if (Date.now() < pinWait) return ($("pinMsg").textContent = "Too many tries. Wait a few seconds.");
+  if ((await pinHash($("pinIn").value, p.salt)) === p.hash) { pinFails = 0; $("pinGate").hidden = true; } else { pinFails++; $("pinIn").value = ""; if (pinFails >= 5) { pinWait = Date.now() + 30000; pinFails = 0; $("pinMsg").textContent = "Too many tries. Wait 30 seconds."; } else $("pinMsg").textContent = "That is not it. Try again."; }
+};
+$("pinIn").addEventListener("keydown", e => { if (e.key === "Enter") $("pinGo").click(); });
+$("pinForgot").onclick = () => { if (confirm("The only way in without your PIN is to erase everything in Womanten on this device. Erase it all and start fresh?")) { try { localStorage.removeItem(KEY); localStorage.removeItem(PINKEY); } catch (e) { /* ignore */ } location.reload(); } };
+document.addEventListener("visibilitychange", () => { if (document.hidden) hiddenAt = Date.now(); else if (pinData() && hiddenAt && Date.now() - hiddenAt > 120000) showGate(); });
+function renderPin() {
+  const has = !!pinData();
+  $("pinBody").innerHTML = `<div class="inner"><p class="hint">Hide Womanten behind a PIN, useful on a shared tablet or computer. It stops casual snooping. It is not encryption, so use the backup tools to keep your data safe.</p>`
+    + (has ? `<p>🔐 A PIN is on.</p><input id="pOld" type="password" inputmode="numeric" maxlength="6" placeholder="Current PIN" style="margin-bottom:8px"><div class="pills"><button id="pRemove">Remove the PIN</button></div>`
+      : `<input id="pNew" type="password" inputmode="numeric" maxlength="6" placeholder="New PIN (4 to 6 digits)" style="margin-bottom:8px"><input id="pNew2" type="password" inputmode="numeric" maxlength="6" placeholder="Type it again"><div class="pills"><button id="pSet">Turn on the PIN</button></div>`) + `</div>`;
+  if (has) $("pRemove").onclick = async () => { const p = pinData(); if ((await pinHash($("pOld").value, p.salt)) !== p.hash) return toast("That is not your current PIN"); localStorage.removeItem(PINKEY); toast("PIN removed"); renderPin(); };
+  else $("pSet").onclick = async () => { const a = $("pNew").value, b = $("pNew2").value; if (!/^\d{4,6}$/.test(a)) return toast("Use 4 to 6 digits"); if (a !== b) return toast("The two PINs do not match"); const salt = rid(); localStorage.setItem(PINKEY, JSON.stringify({ salt, hash: await pinHash(a, salt) })); toast("PIN is on"); renderPin(); };
+}
+showGate();
+
+/* ---------- move to another device ---------- */
+function b64u(bytes) { let s = ""; for (let i = 0; i < bytes.length; i += 8192) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192)); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+function unb64u(t) { const s = atob(t.replace(/-/g, "+").replace(/_/g, "/")), a = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }
+async function makeCode() {
+  const copy = Object.assign({}, S); const bytes = new TextEncoder().encode(JSON.stringify(copy));
+  if (window.CompressionStream) { const cs = new CompressionStream("deflate-raw"), w = cs.writable.getWriter(); w.write(bytes); w.close(); return "WM1:" + b64u(new Uint8Array(await new Response(cs.readable).arrayBuffer())); }
+  return "WM0:" + b64u(bytes);
+}
+async function readCode(code) {
+  const c = code.trim(); let json;
+  if (c.startsWith("WM1:")) { const ds = new DecompressionStream("deflate-raw"), w = ds.writable.getWriter(); w.write(unb64u(c.slice(4))); w.close(); json = new TextDecoder().decode(await new Response(ds.readable).arrayBuffer()); }
+  else if (c.startsWith("WM0:")) json = new TextDecoder().decode(unb64u(c.slice(4))); else throw new Error("That is not a Womanten code.");
+  const d = JSON.parse(json); if (typeof d !== "object" || !d.name) throw new Error("That code does not look right."); return d;
+}
+function renderTransfer() {
+  $("moveBody").innerHTML = `<div class="inner"><p class="hint">Use Womanten on your phone and your computer? Make a code on one, paste it on the other. The code contains all your data, so treat it like a password and delete it after.</p><div class="pills"><button id="mvMake">Make my transfer code</button></div><textarea class="code" id="mvOut" readonly hidden></textarea><div class="pills"><button class="ghost" id="mvCopy" hidden>Copy the code</button></div>
+    <label class="l" for="mvIn" style="font-size:13px">On the other device, paste a code here</label><textarea class="code" id="mvIn" placeholder="WM1:..."></textarea><div class="pills"><button class="ghost" id="mvLoad">Import (replaces this device's data)</button></div></div>`;
+  $("mvMake").onclick = async () => { try { const c = await makeCode(); $("mvOut").value = c; $("mvOut").hidden = false; $("mvCopy").hidden = false; toast("Code ready (" + Math.round(c.length / 1024) + " KB)"); } catch (e) { toast("Could not make a code here"); } };
+  $("mvCopy").onclick = async () => { try { await navigator.clipboard.writeText($("mvOut").value); toast("Copied"); } catch (e) { $("mvOut").select(); toast("Press copy on your keyboard"); } };
+  $("mvLoad").onclick = async () => { try { const d = await readCode($("mvIn").value); if (!confirm("Replace everything in Womanten on this device with the data from the code?")) return; S = Object.assign(fresh(), d); save(); applyAccent(); renderAll(); renderChat(); toast("Moved! Welcome back, " + S.name); } catch (e) { toast(e.message || "That code did not work"); } };
+}
+
+/* ---------- feeling overwhelmed: 5-4-3-2-1 grounding ---------- */
+const GROUND = [["5", "Look around and name 5 things you can see."], ["4", "Notice 4 things you can touch or feel, like your feet on the floor."], ["3", "Listen for 3 things you can hear."], ["2", "Find 2 things you can smell, or 2 things you like about yourself."], ["1", "Name 1 good thing, however small."]];
+$("overBtn").onclick = () => {
+  let i = 0;
+  const show = () => {
+    if (i >= GROUND.length) { $("pformBox").innerHTML = `<h2>You did it 🤍</h2><p class="muted">Now take three slow breaths: in for 4, out for 6. Your feelings are real, and they will pass.</p><p class="muted tiny">If this feels too big to handle alone, tell a trusted adult today. If you might be in danger, call your local emergency number. You can find a helpline at findahelpline.com.</p><div class="row2"><button id="ovWrite">Write how I feel</button><button class="ghost" id="ovDone">I feel calmer</button></div>`;
+      $("ovDone").onclick = () => { $("pform").hidden = true; toast("Well done for taking a moment"); }; $("ovWrite").onclick = () => { $("pform").hidden = true; document.querySelector('[data-tab="today"]').click(); $("moreBox").open = true; $("jText").focus(); $("moreBox").scrollIntoView(); }; return; }
+    const [n, t] = GROUND[i]; $("pformBox").innerHTML = `<h2>Let's slow down</h2><p class="muted tiny">Step ${i + 1} of ${GROUND.length}. Take your time.</p><div class="ground"><span class="n">${n}</span>${t}</div><div class="row2"><button id="ovNext">${i === GROUND.length - 1 ? "Finish" : "Next"}</button><button class="ghost" id="ovX">Close</button></div>`;
+    $("ovNext").onclick = () => { i++; show(); }; $("ovX").onclick = () => { $("pform").hidden = true; };
+  };
+  $("pform").hidden = false; show();
+};
+function renderAll() { renderMemory(); renderHeat(); renderLessons(); renderReset(); renderSound(); renderLook(); renderPin(); renderTransfer(); renderSaver(); renderConf(); renderCapsules(); renderBed(); renderTags(); renderDare(); renderRoutines(); renderStudy(); renderGoals(); renderWins(); renderShare(); renderLevel(); renderInsights(); renderWorkout(); renderFood(); renderCycle(); renderTop(); renderSlots(); renderHabits(); renderMove(); renderCheck(); renderReview(); renderTodos(); renderJournal(); }
 function onboard() {
   const picked = new Set(); $("sheet").hidden = false;
   $("obFocus").innerHTML = Object.entries(FOCUS).map(([k, l]) => `<button data-f="${k}">${l}</button>`).join("");

@@ -351,6 +351,25 @@ def review():
     return jsonify(review=plans.fallback_review(days, streak), ai=False)
 
 
+@app.post("/api/recipe")
+def recipe():
+    if limited("plan", 20):
+        return err("Too many for now. Try again later.", 429)
+    d = request.get_json(silent=True) or {}
+    meal = clean(d.get("meal"), 140)
+    if not meal:
+        return err("Which meal?")
+    diet = plans.pick(d.get("diet"), plans.DIETS, "everything")
+    allergies = clean(d.get("allergies"), 100)
+    if ai_on():
+        try:
+            raw = ask([{"role": "system", "content": plans.PLAN_RULES}, {"role": "user", "content": plans.recipe_prompt(meal, diet, allergies)}], want_json=True, max_tokens=1200)
+            return jsonify(recipe=plans.clean_recipe(raw), ai=True)
+        except Exception:
+            pass
+    return jsonify(recipe=plans.fallback_recipe(meal), ai=False)
+
+
 @app.post("/api/reframe")
 def reframe():
     if limited("plan", 20):

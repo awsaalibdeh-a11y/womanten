@@ -298,3 +298,27 @@ FALLBACK_TIPS = ["Good start. A friendly tone and a clear sentence go a long way
 def fallback_practice(scenario, turns):
     lines = FALLBACK_LINES[scenario]
     return {"reply": lines[min(turns, len(lines) - 1)], "tip": FALLBACK_TIPS[min(turns, len(FALLBACK_TIPS) - 1)] if turns else ""}
+
+
+# ---------------------------------------------------------------- recipe helper
+def recipe_prompt(meal, diet, allergies):
+    return (f'Give a simple recipe for this meal: "{meal}". The person eats: {diet}. Allergies (never include these): {allergies or "none"}. '
+            'JSON: {"title":"short name","time":"like 15 minutes","serves":"1","ingredients":["amount and ingredient", ...],"steps":["short step", ...],"tip":"one helpful tip"}. '
+            "5 to 10 ingredients, 3 to 7 steps, easy for a beginner, no special equipment. Never mention calories, weight or dieting.")
+
+
+def clean_recipe(raw):
+    d = json.loads(raw) or {}
+    out = {"title": clean(d.get("title"), 80), "time": clean(d.get("time"), 30), "serves": clean(d.get("serves"), 20) or "1",
+           "ingredients": [clean(i, 80) for i in (d.get("ingredients") or [])[:14] if clean(i, 80)],
+           "steps": [clean(i, 200) for i in (d.get("steps") or [])[:10] if clean(i, 200)], "tip": clean(d.get("tip"), 200)}
+    if not out["title"] or len(out["ingredients"]) < 2 or len(out["steps"]) < 2:
+        raise ValueError("bad recipe")
+    return out
+
+
+def fallback_recipe(meal):
+    m = clean(meal, 100) or "your meal"
+    return {"title": m, "time": "15 to 20 minutes", "serves": "1", "ingredients": ["The foods named in the meal, in the amounts you like", "A little oil, salt and pepper or your favourite spices", "Water to drink with it"],
+            "steps": ["Wash your hands and prepare the ingredients: wash, peel and chop what needs it.", "Cook the warm parts of the meal until they are hot all the way through, and put the cold parts together.", "Put it all on a plate, taste it and add seasoning.", "Sit down and enjoy it without rushing."],
+            "tip": "Start the part that takes longest first, and tidy as you go."}

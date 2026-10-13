@@ -11,6 +11,13 @@
 <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
+<div id="pinGate" class="pingate" hidden><div class="panel">
+  <h2>&#128274; Womanten is locked</h2>
+  <p class="muted tiny" id="pinMsg">Enter your PIN to open.</p>
+  <input id="pinIn" type="password" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="PIN">
+  <button id="pinGo">Unlock</button>
+  <button class="ghost" id="pinForgot">I forgot my PIN</button>
+</div></div>
 <header class="top">
   <div class="brand"><i>&#9679;</i> Womanten</div>
   <div class="chips"><span class="chip" id="streak" title="Days in a row">&#128293; 0</span><span class="chip" id="points" title="Points">&#11088; 0</span></div>
@@ -18,7 +25,7 @@
 
 <main id="app" class="wrap">
   <section id="tab-today" class="tab on">
-    <div class="hello"><h1 id="hello">Hello</h1><p id="sub" class="muted">Small steps, every day.</p><p id="affirm" class="affirm"></p></div>
+    <div class="hello"><h1 id="hello">Hello</h1><p id="sub" class="muted">Small steps, every day.</p><p id="affirm" class="affirm"></p><p id="memory" class="muted tiny"></p><button class="ghost" id="overBtn" style="margin-top:6px">&#129731; Feeling overwhelmed?</button></div>
     <div id="saver" class="saver" hidden></div>
     <div class="bar"><div id="barfill"></div></div>
     <p class="muted tiny" id="barlabel"></p>
@@ -113,13 +120,20 @@
       <details id="tConf"><summary>📈 Confidence check-in</summary><div id="confBody"></div></details>
       <details id="tCap"><summary>💌 Letter to future me</summary><div id="capBody"></div></details>
       <details id="tSleep"><summary>😴 Bedtime calculator</summary><div id="bedBody"></div></details>
+      <details id="tLessons"><summary>📖 Confidence lessons</summary><div id="lessonBody"></div></details>
+      <details id="tReset"><summary>🗓️ Weekly reset</summary><div id="resetBody"></div></details>
       <details id="tWins"><summary>🏆 Wins wall</summary><div id="winBody"></div></details>
       <details id="tShare"><summary>📤 Share my week</summary><div id="shareBody"></div></details>
+      <details id="tSound"><summary>🎧 Focus sounds</summary><div id="soundBody"></div></details>
+      <details id="tLook"><summary>🎨 Colours</summary><div id="lookBody"></div></details>
+      <details id="tPin"><summary>🔐 Privacy lock (PIN)</summary><div id="pinBody"></div></details>
+      <details id="tMove"><summary>📲 Move to another device</summary><div id="moveBody"></div></details>
     </div>
 
     <div class="card" id="insightCard">
       <h2>Insights</h2>
       <p class="hint">The last 14 days, so you can see what actually helps you.</p>
+      <div id="heat"></div>
       <div id="charts"></div>
       <div id="patterns"></div>
       <div class="row2"><button id="revGo">Get my AI weekly review</button></div>
@@ -142,6 +156,7 @@
 
       <h2 style="margin-top:22px">Breathe</h2>
       <p class="hint">Four slow breaths to calm down. In for 4, hold 4, out for 4, hold 4.</p>
+      <div class="row2" style="justify-content:center"><select id="bPat" style="max-width:260px"><option value="box">Box breathing (4-4-4-4)</option><option value="478">Relax (4-7-8)</option><option value="calm">Calm (5 in, 5 out)</option></select></div>
       <div class="breathe"><div class="circle" id="circle"></div><div id="bLabel" class="muted">Ready when you are</div><div class="pills" style="justify-content:center"><button id="bGo">Start breathing</button></div></div>
 
       <h2 style="margin-top:22px">Back up your data</h2>
