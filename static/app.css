@@ -95,3 +95,8 @@ a.btnlink { display: inline-block; text-decoration: none; background: var(--rose
 .pcard { padding: 8px 12px; border-radius: 14px; margin-top: 6px; font-size: 14px; } .pcard.tip { background: #1b1613; border: 1px solid var(--rose2); color: #e9c9c3; font-size: 13px; }
 .sharebox { white-space: pre-wrap; background: var(--card2); border: 1px solid var(--line); border-radius: 14px; padding: 12px; font-size: 14px; }
 .moodtags .on { background: var(--rose2); }
+
+.saver { margin: 8px 0; padding: 12px 14px; border-radius: 14px; background: #1b1411; border: 1px solid var(--rose2); font-size: 14px; } .saver b { color: var(--rose); }
+input[type=range] { width: 100%; accent-color: var(--rose); padding: 0; } .conf { text-align: center; } .conf .big { font-size: 38px; font-weight: 300; }
+.cap { padding: 10px 0; border-top: 1px solid var(--line); font-size: 14px; } .cap small { color: var(--muted); display: block; }
+.meal .tick { width: 24px; height: 24px; font-size: 13px; margin-left: auto; flex: none; }

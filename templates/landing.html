@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a0a0a">
+<title>Womanten: confidence, one small step at a time</title>
+<meta name="description" content="An AI coach, a weekly plan, workouts and food you enjoy, and an app lock that keeps TikTok, Instagram and YouTube shut until you do a push-up. Free. No account. Private.">
+<meta property="og:title" content="Womanten">
+<meta property="og:description" content="Build confidence one small step at a time. An app and a website.">
+<link rel="icon" href="/static/icon.svg">
+<link rel="manifest" href="/manifest.webmanifest">
+<style>
+:root { --bg: #0a0a0a; --card: #121212; --card2: #1a1a1a; --line: #272727; --ink: #eeeeee; --muted: #929292; --rose: #e8998d; --rose2: #6e3b34; color-scheme: dark; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; background: var(--bg); }
+body { font: 17px/1.6 Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: radial-gradient(800px 420px at 50% -8%, rgba(232,153,141,.12), transparent 65%), var(--bg); -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration: none; }
+.wrap { width: min(1080px, 100% - 36px); margin: 0 auto; }
+nav { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(14px); background: rgba(10,10,10,.85); border-bottom: 1px solid var(--line); }
+nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; gap: 12px; }
+.brand { font-weight: 700; font-size: 19px; letter-spacing: -.02em; } .brand i { color: var(--rose); font-style: normal; }
+nav .links { display: flex; gap: 22px; align-items: center; } nav .links a { color: var(--muted); font-size: 14px; } nav .links a:hover { color: #fff; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 24px; border-radius: 14px; font-weight: 700; font-size: 16px; border: 1px solid var(--line); background: var(--card2); color: var(--ink); transition: transform .15s, filter .15s; }
+.btn:hover { transform: translateY(-2px); } .btn.primary { background: var(--rose); color: #1f100c; border-color: transparent; } .btn.sm { padding: 8px 16px; font-size: 14px; }
+.hero { text-align: center; padding: 11vh 0 6vh; }
+.kick { letter-spacing: .4em; font-size: 12px; color: var(--muted); text-transform: uppercase; margin-bottom: 18px; }
+h1 { font-size: clamp(40px, 8.5vw, 92px); font-weight: 300; letter-spacing: -.045em; line-height: 1; } h1 em { font-style: normal; color: var(--rose); font-weight: 400; }
+.lead { max-width: 52ch; margin: 22px auto 0; color: var(--muted); font-size: clamp(16px, 2vw, 20px); }
+.cta { margin-top: 30px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; } .fine { margin-top: 14px; color: var(--muted); font-size: 13px; }
+.shots { display: flex; gap: 16px; justify-content: center; margin: 44px auto 0; flex-wrap: wrap; } .shots figure { width: min(250px, 44%); } .shots img { width: 100%; border-radius: 22px; border: 1px solid var(--line); box-shadow: 0 30px 70px rgba(0,0,0,.6); display: block; } .shots figcaption { text-align: center; color: var(--muted); font-size: 13px; margin-top: 10px; }
+section { padding: 8vh 0; } h2 { font-size: clamp(28px, 4.6vw, 46px); font-weight: 300; letter-spacing: -.04em; line-height: 1.1; } h2 em { font-style: normal; color: var(--rose); }
+.sub { color: var(--muted); max-width: 60ch; margin-top: 10px; }
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 30px; counter-reset: s; }
+.step { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 20px; counter-increment: s; } .step::before { content: counter(s); display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--rose2); color: #fff; font-weight: 700; margin-bottom: 12px; } .step b { display: block; font-size: 18px; margin-bottom: 4px; } .step span { color: var(--muted); font-size: 15px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-top: 30px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 22px; } .card h3 { font-size: 19px; margin-bottom: 10px; } .card ul { list-style: none; } .card li { padding: 5px 0; color: #cfcfcf; font-size: 15px; border-top: 1px solid #1d1d1d; } .card li:first-child { border-top: 0; } .card li b { color: #fff; font-weight: 600; }
+.promise { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 28px; } .promise div { background: #0f0f0f; border: 1px solid var(--line); border-radius: 18px; padding: 18px; font-size: 15px; color: #c9c9c9; } .promise b { display: block; color: #fff; margin-bottom: 4px; font-size: 16px; }
+.big { border: 1px solid var(--rose2); background: linear-gradient(180deg, #181210, var(--card)); border-radius: 28px; padding: clamp(22px, 4vw, 44px); }
+details { border-top: 1px solid var(--line); padding: 16px 0; } details:last-child { border-bottom: 1px solid var(--line); } summary { cursor: pointer; font-weight: 600; font-size: 18px; list-style: none; display: flex; justify-content: space-between; } summary::after { content: "+"; color: var(--muted); } details[open] summary::after { content: "–"; } summary::-webkit-details-marker { display: none; } details p { color: var(--muted); margin-top: 10px; max-width: 70ch; }
+ol.install { margin: 18px 0 0 22px; color: #cfcfcf; } ol.install li { margin: 8px 0; }
+footer { border-top: 1px solid var(--line); padding: 36px 0 60px; text-align: center; color: var(--muted); font-size: 14px; }
+:focus-visible { outline: 2px solid var(--rose); outline-offset: 3px; border-radius: 8px; }
+@media (max-width: 640px) { nav .links a:not(.btn) { display: none; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<nav><div class="wrap"><a class="brand" href="/"><i>&#9679;</i> Womanten</a>
+  <div class="links"><a href="#lock">The lock</a><a href="#features">Features</a><a href="#safe">Safe by design</a><a href="#faq">Questions</a><a class="btn sm primary" href="/app">Open the app</a></div></div></nav>
+
+<header class="hero"><div class="wrap">
+  <div class="kick">An app and a website</div>
+  <h1>Confidence, <em>one small step</em> at a time.</h1>
+  <p class="lead">An AI coach, a plan for your week, workouts and food you enjoy, and a lock that keeps TikTok, Instagram and YouTube shut until you earn your scrolls with a push-up.</p>
+  <div class="cta">
+    {% if has_apk %}<a class="btn primary" href="/download">&#11015; Get the Android app</a>{% else %}<span class="btn">Android app coming soon</span>{% endif %}
+    <a class="btn" href="/app">&#127760; Use it on the web</a>
+  </div>
+  <p class="fine">Free. No account. Your plans, habits and journal stay on your device.{% if has_apk %} Android 10 or newer, {{ apk_mb }} MB.{% endif %}</p>
+  <div class="shots">
+    <figure><img src="/static/shots/today.jpg" alt="The Today screen with the app lock and your level" loading="lazy" onerror="this.closest('figure').remove()"><figcaption>Your day, your level, your lock</figcaption></figure>
+    <figure><img src="/static/shots/plans.jpg" alt="An AI-made workout and food plan" loading="lazy" onerror="this.closest('figure').remove()"><figcaption>Workout and food plans made for you</figcaption></figure>
+    <figure><img src="/static/shots/insights.jpg" alt="Charts of sleep, water, movement and mood" loading="lazy" onerror="this.closest('figure').remove()"><figcaption>See what actually helps you</figcaption></figure>
+  </div>
+</div></header>
+
+<section id="lock"><div class="wrap"><div class="big">
+  <h2>The lock that makes you <em>earn</em> your scrolls</h2>
+  <p class="sub">On Android, Womanten can lock the apps you scroll too much. Open one and it asks for a few reps first. It watches through your camera, on your phone, and never saves or sends the video.</p>
+  <div class="steps">
+    <div class="step"><b>Pick your apps</b><span>TikTok, Instagram, YouTube, or any app on your phone. Choose the hours it is on.</span></div>
+    <div class="step"><b>Open one and it stops you</b><span>You are sent home and the camera opens with your exercise.</span></div>
+    <div class="step"><b>Do the reps</b><span>Push-ups, squats, jumping jacks or a plank hold. The camera counts them.</span></div>
+    <div class="step"><b>Earn your scrolls</b><span>Each rep earns 10 scrolls, which you can change. When they run out, it locks again.</span></div>
+  </div>
+  <p class="sub" style="margin-top:22px"><b style="color:#fff">Focus mode</b> goes further: pick 10 to 180 minutes and your locked apps are blocked completely. To leave early you have to do 10 reps on camera.</p>
+</div></div></section>
+
+<section id="features"><div class="wrap">
+  <h2>Everything in <em>one place</em></h2>
+  <p class="sub">Not a lot of tiny tools. A set of things that work together, so each day counts.</p>
+  <div class="grid">
+    <div class="card"><h3>🗓️ Plan your days</h3><ul><li><b>AI weekly plan</b> with a morning, afternoon and evening step</li><li><b>Habits</b> with streaks and 20 ready-made ideas</li><li><b>To-do list</b> for real things to finish</li><li><b>Weekly goals</b> that fill up on their own</li><li><b>Streak freeze</b> forgives a missed day</li></ul></div>
+    <div class="card"><h3>💪 Body</h3><ul><li><b>AI workout plan</b> for your level, time, place and injuries</li><li><b>AI food plan</b> with a shopping list. Balanced, no calorie counting</li><li><b>Meal check-offs</b> and gentle movement logging</li><li><b>Water and sleep</b> with clear goals</li><li><b>Bedtime calculator</b> and a private cycle tracker</li></ul></div>
+    <div class="card"><h3>🧠 Mind</h3><ul><li><b>AI coach</b> that is kind and practical</li><li><b>Reframe a harsh thought</b> into a kinder, truer one</li><li><b>Journal</b> with a daily question and a wins wall</li><li><b>Guided routines</b>, breathing and a study timer</li><li><b>Letter to future me</b> that opens on a date you choose</li></ul></div>
+    <div class="card"><h3>🗣️ Confidence</h3><ul><li><b>Practice a conversation</b> with an AI partner and get a tip</li><li><b>Brave dare</b> of the day, 30 to complete</li><li><b>Confidence check-in</b> every week, with a chart</li><li><b>Challenges with friends</b> using a 6-letter code</li><li><b>Daily affirmation</b> and a streak-saver nudge</li></ul></div>
+    <div class="card"><h3>📊 Progress</h3><ul><li><b>Insights</b>: 14 days of sleep, water, movement and mood</li><li><b>Pattern finder</b>: does sleep or movement lift your mood?</li><li><b>AI weekly review</b> that reads your numbers</li><li><b>Levels and 19 badges</b></li><li><b>Share your week</b> and back up your data</li></ul></div>
+    <div class="card"><h3>📱 The app</h3><ul><li><b>App lock</b> with push-ups, squats, jacks and plank</li><li><b>Focus mode</b> that really blocks apps</li><li><b>Lock hours</b>, like nights or school time</li><li><b>Daily reminders</b> for plan, water and journal</li><li>Works as a <b>website</b> too, nothing to install</li></ul></div>
+  </div>
+</div></section>
+
+<section id="safe"><div class="wrap">
+  <h2>Honest and <em>safe by design</em></h2>
+  <div class="promise">
+    <div><b>Never about your looks</b>It never rates, scores or compares your body or face. Confidence is about what you do, not how you look.</div>
+    <div><b>No calories, no dieting</b>The food plan is about enjoying balanced meals. It never counts calories or talks about losing weight.</div>
+    <div><b>Private</b>Your plan, habits, journal and cycle tracker stay on your device. Challenges only share a name and a tick.</div>
+    <div><b>You are in control</b>The lock is your promise to yourself. You can switch it off any time in Android's settings.</div>
+    <div><b>Care when it matters</b>If you tell the coach you feel unsafe or want to hurt yourself, it points you to a trusted adult and to findahelpline.com.</div>
+    <div><b>Camera stays on your phone</b>Push-ups are counted on the phone itself. The video is never stored or uploaded.</div>
+  </div>
+</div></section>
+
+<section id="install"><div class="wrap">
+  <h2>Install on <em>Android</em></h2>
+  <ol class="install">
+    <li>Tap <b>Get the Android app</b> and open the file when it finishes.</li>
+    <li>If Android asks, allow <b>Install unknown apps</b> for your browser, then go back and tap Install.</li>
+    <li>Open Womanten and choose <b>Lock apps</b>. Turn on <b>Womanten app lock</b> in Accessibility settings.</li>
+    <li>Pick your apps and your exercise. Allow the camera when it asks.</li>
+  </ol>
+  <div class="cta" style="justify-content:flex-start">{% if has_apk %}<a class="btn primary" href="/download">&#11015; Get the Android app</a>{% endif %}<a class="btn" href="/app">&#127760; Use it on the web</a></div>
+</div></section>
+
+<section id="faq"><div class="wrap">
+  <h2>Common <em>questions</em></h2>
+  <div style="margin-top:26px">
+    <details><summary>Is it free?</summary><p>Yes. There is no account and no payment. The AI features use a small amount of AI each time, so very heavy use in one day may be limited.</p></details>
+    <details><summary>Does it work on iPhone?</summary><p>The website works on any phone, and you can add it to your home screen. The app lock needs Android, because iPhone does not let an app lock other apps.</p></details>
+    <details><summary>How does the lock know I did a push-up?</summary><p>Your camera and an on-device pose model watch your arms. It counts a rep when you lower your body and push back up. It is not perfect, so go slowly and keep your arms in view.</p></details>
+    <details><summary>Can I cheat the lock?</summary><p>You can turn it off in Android's Accessibility settings. That is on purpose: it is a promise you keep to yourself, and it works best when you choose it.</p></details>
+    <details><summary>Where is my data?</summary><p>On your own phone or browser. The AI features send only what you ask about (like your question or your numbers for a review) to be answered, and nothing is sold. Use <b>Back up your data</b> to keep a copy.</p></details>
+    <details><summary>Is it a replacement for a doctor or a therapist?</summary><p>No. Womanten is a coach for everyday habits and confidence. For health, injuries, allergies or feeling very low, talk to a doctor, a parent or a trusted adult.</p></details>
+    <details><summary>Who made it?</summary><p>Aws made Womanten, inspired by apps like Critique AI, and built the version you see here.</p></details>
+  </div>
+</div></section>
+
+<footer><div class="wrap">Made by Aws. AI features use the OpenAI API.<br><a href="/app" style="text-decoration:underline">Open the app</a>{% if has_apk %} &middot; <a href="/download" style="text-decoration:underline">Android app</a>{% endif %} &middot; <a href="https://github.com/awsaalibdeh-a11y/womanten" style="text-decoration:underline">Code</a></div></footer>
+<script src="/static/hub.js" data-app="womanten" defer></script>
+</body>
+</html>

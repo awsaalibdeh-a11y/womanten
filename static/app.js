@@ -10,7 +10,7 @@ const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 /* ---------- storage: everything personal stays in this browser ---------- */
 const KEY = "womanten.v1";
 let S = load();
-function fresh() { return { name: "", focus: [], week: [], done: {}, habits: [], workouts: [], checks: {}, chat: [], pid: rid(), challenges: [], bonus: 0, todos: [], journal: [], workout: null, food: null, shop: {}, cycle: [], woDone: {}, braveDone: {}, routinesDone: [], study: [], goals: [], wins: [] }; }
+function fresh() { return { name: "", focus: [], week: [], done: {}, habits: [], workouts: [], checks: {}, chat: [], pid: rid(), challenges: [], bonus: 0, todos: [], journal: [], workout: null, food: null, shop: {}, cycle: [], woDone: {}, braveDone: {}, routinesDone: [], study: [], goals: [], wins: [], conf: [], capsules: [], mealsDone: {} }; }
 function load() { try { return Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) { return fresh(); } }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* private mode: still works for this visit */ } }
 function rid() { const a = new Uint8Array(10); (window.crypto || {}).getRandomValues ? crypto.getRandomValues(a) : a.forEach((_, i) => a[i] = Math.random() * 256); return [...a].map(b => (b % 36).toString(36)).join(""); }
@@ -37,6 +37,8 @@ function activeDays() {
   (S.routinesDone || []).forEach(r => set.add(r.date));
   (S.study || []).forEach(x => set.add(x.date));
   (S.wins || []).forEach(w => set.add(w.date));
+  Object.keys(S.mealsDone || {}).forEach(d => { if ((S.mealsDone[d] || []).length) set.add(d); });
+  (S.conf || []).forEach(c => set.add(c.date));
   Object.keys(S.checks).forEach(d => { if (S.checks[d].mood != null) set.add(d); });
   return set;
 }
@@ -57,7 +59,7 @@ function points() {
   const habits = S.habits.reduce((a, h) => a + h.days.length, 0);
   const mins = S.workouts.reduce((a, w) => a + w.min, 0);
   const todos = S.todos.filter(t => t.done).length;
-  return tasks * 10 + Object.keys(S.woDone || {}).length * 15 + habits * 5 + todos * 5 + S.journal.length * 3 + Object.keys(S.braveDone || {}).length * 2 + (S.routinesDone || []).length + Math.floor((S.wins || []).length / 2) + Math.floor((S.study || []).reduce((a, x) => a + x.min, 0) / 5) + Math.floor(mins / 5) + S.bonus;
+  return tasks * 10 + Object.keys(S.woDone || {}).length * 15 + habits * 5 + todos * 5 + S.journal.length * 3 + Object.keys(S.braveDone || {}).length * 2 + (S.routinesDone || []).length + Object.values(S.mealsDone || {}).reduce((a, l) => a + l.length, 0) * 2 + (S.conf || []).length * 3 + Math.floor((S.wins || []).length / 2) + Math.floor((S.study || []).reduce((a, x) => a + x.min, 0) / 5) + Math.floor(mins / 5) + S.bonus;
 }
 
 /* ---------- Today ---------- */
@@ -327,14 +329,15 @@ function renderFood() {
   const f = S.food;
   $("fdMake").textContent = f ? "Change plan" : "Make my plan";
   if (!f) { $("fdBody").innerHTML = `<p class="muted">Tell me how you eat and what you do not like, and the AI will plan a week of balanced meals and a shopping list. No calorie counting, ever.</p>`; return; }
-  const t = todayRow(f.plan.days), meals = (d) => [["breakfast", "Breakfast"], ["lunch", "Lunch"], ["dinner", "Dinner"], ["snack", "Snack"]].filter(([k]) => d[k]).map(([k, l]) => `<div class="meal"><b>${l}</b><span>${esc(d[k])}</span></div>`).join("");
+  const t = todayRow(f.plan.days), eaten = S.mealsDone[today()] || [], meals = (d, tick) => [["breakfast", "Breakfast"], ["lunch", "Lunch"], ["dinner", "Dinner"], ["snack", "Snack"]].filter(([k]) => d[k]).map(([k, l]) => `<div class="meal"><b>${l}</b><span>${esc(d[k])}</span>${tick ? `<button class="tick ${eaten.includes(k) ? "on" : ""}" data-meal="${k}" aria-label="I had this">✓</button>` : ""}</div>`).join("");
   const shop = f.plan.shopping.map((it, i) => `<label><input type="checkbox" data-shop="${i}" ${S.shop[i] ? "checked" : ""}><span class="${S.shop[i] ? "got" : ""}">${esc(it)}</span></label>`).join("");
-  $("fdBody").innerHTML = `<p class="hint">Today, ${esc(t.day)}</p>${meals(t)}`
-    + `<details><summary>See the whole week</summary>${f.plan.days.map(d => `<div class="day"><h3>${d.day}</h3>${meals(d)}</div>`).join("")}</details>`
+  $("fdBody").innerHTML = `<p class="hint">Today, ${esc(t.day)}. Tap the tick when you have eaten a meal (+2).</p>${meals(t, true)}`
+    + `<details><summary>See the whole week</summary>${f.plan.days.map(d => `<div class="day"><h3>${d.day}</h3>${meals(d, false)}</div>`).join("")}</details>`
     + `<details><summary>Shopping list (${f.plan.shopping.filter((_, i) => !S.shop[i]).length} to get)</summary><div class="shop">${shop}</div></details>`
     + (f.plan.tips.length ? `<details><summary>Tips</summary>${f.plan.tips.map(x => `<p class="muted tiny" style="margin-top:6px">• ${esc(x)}</p>`).join("")}</details>` : "")
     + `<p class="note">${f.ai ? "Made by AI for you." : "A starter plan."} Balanced eating, not a diet.</p>`;
 }
+$("fdBody").addEventListener("click", e => { const b = e.target.closest("[data-meal]"); if (!b) return; const l = S.mealsDone[today()] = S.mealsDone[today()] || []; const i = l.indexOf(b.dataset.meal); if (i >= 0) l.splice(i, 1); else { l.push(b.dataset.meal); toast("+2 points"); } save(); renderAll(); });
 $("fdBody").addEventListener("change", e => { const c = e.target.closest("[data-shop]"); if (!c) return; S.shop[c.dataset.shop] = c.checked; save(); renderFood(); });
 
 /* ---------- private cycle tracker ---------- */
@@ -490,7 +493,7 @@ $("goalBody").addEventListener("click", e => { const x = e.target.closest("[data
 /* ---------- wins wall ---------- */
 function renderWins() {
   $("winBody").innerHTML = `<div class="inner"><p class="hint">Write down anything you are proud of, even tiny things. Read them on hard days.</p><form class="send" id="winForm"><input id="winIn" maxlength="120" placeholder="I am proud that I…" autocomplete="off"><button>Add</button></form>
-    ${S.wins.slice(-8).reverse().map(w => `<div class="win">🏆 ${esc(w.text)} <small>· ${esc(w.date)}</small></div>`).join("")}<p class="prog">${S.wins.length} wins so far</p></div>`;
+    ${S.wins.slice(-8).reverse().map(w => `<div class="win">🏆 ${esc(w.text)} <small>· ${esc(w.date)}</small></div>`).join("")}<div class="pills"><button class="ghost" id="winRemember">Remind me of a win</button></div><p class="hint" id="winRem"></p><p class="prog">${S.wins.length} wins so far</p></div>`;
   $("winForm").onsubmit = e => { e.preventDefault(); const v = $("winIn").value.trim().slice(0, 120); if (!v) return; S.wins.push({ date: today(), text: v }); save(); toast("Win saved 🏆"); renderAll(); };
 }
 
@@ -545,7 +548,44 @@ $("rfGo").onclick = async () => {
   } catch (e) { toast(e.message); }
   b.disabled = false; b.textContent = "Help me reframe it";
 };
-function renderAll() { renderTags(); renderDare(); renderRoutines(); renderStudy(); renderGoals(); renderWins(); renderShare(); renderLevel(); renderInsights(); renderWorkout(); renderFood(); renderCycle(); renderTop(); renderSlots(); renderHabits(); renderMove(); renderCheck(); renderReview(); renderTodos(); renderJournal(); }
+
+/* ---------- confidence check-in: the number this whole app is about ---------- */
+function renderConf() {
+  const wk = weekStart(), thisWeek = S.conf.find(c => c.week === wk), first = S.conf[0], last = S.conf[S.conf.length - 1];
+  const series = S.conf.slice(-12), w = 280, h = 56, bw = w / Math.max(series.length, 1);
+  const bars = series.map((c, i) => { const bh = Math.max(2, Math.round(c.v / 10 * (h - 4))); return `<rect x="${i * bw + 2}" y="${h - bh}" width="${Math.max(4, bw - 4)}" height="${bh}" rx="3"></rect>`; }).join("");
+  $("confBody").innerHTML = `<div class="inner conf"><p class="hint">How confident do you feel this week, from 1 (not at all) to 10 (very)? Check in once a week and watch it grow.</p>
+    <div class="big" id="confVal">${thisWeek ? thisWeek.v : 5}</div><input type="range" id="confRange" min="1" max="10" value="${thisWeek ? thisWeek.v : 5}"><div class="pills" style="justify-content:center"><button id="confSave">${thisWeek ? "Update this week" : "Save this week"}</button></div>
+    ${series.length ? `<div class="chart"><div class="lab"><span>Your confidence over time</span><span>${series.length > 1 ? (last.v - first.v >= 0 ? "+" : "") + (last.v - first.v) + " since you started" : "first check-in"}</span></div><svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${bars}</svg></div>` : ""}</div>`;
+  $("confRange").oninput = e => { $("confVal").textContent = e.target.value; };
+  $("confSave").onclick = () => { const v = +$("confRange").value; const ex = S.conf.find(c => c.week === wk); if (ex) { ex.v = v; ex.date = today(); } else { S.conf.push({ week: wk, date: today(), v }); toast("Saved. +3 points"); } save(); renderAll(); };
+}
+
+/* ---------- letter to future me ---------- */
+function renderCapsules() {
+  const t = today(), list = S.capsules.slice().sort((a, b) => a.open.localeCompare(b.open));
+  $("capBody").innerHTML = `<div class="inner"><p class="hint">Write a note to yourself. It stays locked until the day you choose, then you can open it.</p><textarea id="capText" maxlength="500" placeholder="Dear future me…"></textarea>
+    <div class="row2"><select id="capWhen"><option value="7">Open in 1 week</option><option value="30" selected>Open in 1 month</option><option value="90">Open in 3 months</option><option value="180">Open in 6 months</option></select><button id="capSave">Seal it</button></div>
+    ${list.map((c, i) => c.open <= t ? `<div class="cap"><small>Written ${esc(c.written)}, opened ${esc(c.open)}</small>${esc(c.text)}</div>` : `<div class="cap"><small>🔒 Locked until ${esc(c.open)} (written ${esc(c.written)})</small></div>`).join("")}</div>`;
+  $("capSave").onclick = () => { const v = $("capText").value.trim().slice(0, 500); if (!v) return toast("Write something first"); const d = new Date(); d.setDate(d.getDate() + +$("capWhen").value); S.capsules.push({ written: today(), open: dstr(d), text: v }); save(); toast("Sealed until " + dstr(d)); renderCapsules(); };
+}
+
+/* ---------- bedtime calculator ---------- */
+function renderBed() {
+  const wake = (S.wake || "07:00"), [h, m] = wake.split(":").map(Number);
+  const at = hrs => { const t = (h * 60 + m - hrs * 60 + 1440 * 2) % 1440; return String(Math.floor(t / 60)).padStart(2, "0") + ":" + String(t % 60).padStart(2, "0"); };
+  $("bedBody").innerHTML = `<div class="inner"><p class="hint">Teenagers need about 8 to 10 hours of sleep. Tell me when you wake up.</p><div class="row2"><label class="l" for="wakeAt" style="align-self:center">I wake up at</label><input type="time" id="wakeAt" value="${wake}"></div>
+    <div class="cyc" style="margin-top:12px"><div><b>${at(10)}</b><span>for 10 hours</span></div><div><b>${at(9)}</b><span>for 9 hours</span></div><div><b>${at(8)}</b><span>for 8 hours</span></div></div><p class="note">Start winding down 30 minutes before. Phone down, lights low.</p></div>`;
+  $("wakeAt").onchange = e => { S.wake = e.target.value || "07:00"; save(); renderBed(); };
+}
+
+/* ---------- remember a win, and the streak saver ---------- */
+$("winBody").addEventListener("click", e => { if (!e.target.closest("#winRemember")) return; if (!S.wins.length) return toast("Add a win first"); const w = S.wins[Math.floor(Math.random() * S.wins.length)]; $("winRem").textContent = "🏆 Remember: " + w.text + " (" + w.date + ")"; });
+function renderSaver() {
+  const n = streak(), s = $("saver"), doneToday = activeDays().has(today());
+  if (n > 0 && !doneToday) { s.hidden = false; s.innerHTML = `🔥 Keep your <b>${n} day streak</b> alive: do one small thing today. Tick a plan step, log a win, or take a 2 minute breath.`; } else s.hidden = true;
+}
+function renderAll() { renderSaver(); renderConf(); renderCapsules(); renderBed(); renderTags(); renderDare(); renderRoutines(); renderStudy(); renderGoals(); renderWins(); renderShare(); renderLevel(); renderInsights(); renderWorkout(); renderFood(); renderCycle(); renderTop(); renderSlots(); renderHabits(); renderMove(); renderCheck(); renderReview(); renderTodos(); renderJournal(); }
 function onboard() {
   const picked = new Set(); $("sheet").hidden = false;
   $("obFocus").innerHTML = Object.entries(FOCUS).map(([k, l]) => `<button data-f="${k}">${l}</button>`).join("");

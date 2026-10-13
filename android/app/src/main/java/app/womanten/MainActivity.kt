@@ -82,6 +82,6 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
-        private const val OFFLINE = "<body style='background:#0a0a0a;color:#eee;font-family:sans-serif;text-align:center;padding:48px 24px'><h2>You are offline</h2><p style='color:#999'>Womanten needs the internet to open. Your locks still work without it.</p><button onclick='location.href=\"https://womanten.onrender.com/\"' style='padding:12px 22px;border-radius:12px;border:0;background:#e8998d;font-weight:700'>Try again</button></body>"
+        private const val OFFLINE = "<body style='background:#0a0a0a;color:#eee;font-family:sans-serif;text-align:center;padding:48px 24px'><h2>You are offline</h2><p style='color:#999'>Womanten needs the internet to open. Your locks still work without it.</p><button onclick='location.href=\"https://womanten.onrender.com/app\"' style='padding:12px 22px;border-radius:12px;border:0;background:#e8998d;font-weight:700'>Try again</button></body>"
     }
 }

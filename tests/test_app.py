@@ -17,6 +17,19 @@ class Basics(unittest.TestCase):
         womanten._hits.clear()
         self.c = womanten.app.test_client()
 
+    def test_landing_and_app_are_separate_pages(self):
+        land = self.c.get("/").get_data(as_text=True)
+        self.assertIn("Confidence,", land); self.assertNotIn('id="slots"', land)
+        app_html = self.c.get("/app").get_data(as_text=True)
+        self.assertIn('id="slots"', app_html)
+
+    def test_the_android_app_is_sent_to_the_app_screen(self):
+        r = self.c.get("/", headers={"User-Agent": "Mozilla/5.0 (Linux; Android 14) WomantenApp"})
+        self.assertEqual(r.status_code, 302); self.assertTrue(r.headers["Location"].endswith("/app"))
+
+    def test_manifest_starts_at_the_app(self):
+        self.assertEqual(self.c.get("/manifest.webmanifest").get_json()["start_url"], "/app")
+
     def test_pages(self):
         self.assertEqual(self.c.get("/").status_code, 200)
         self.assertTrue(self.c.get("/health").get_json()["ok"])

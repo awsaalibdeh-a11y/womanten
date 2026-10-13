@@ -12,7 +12,7 @@ import threading
 import time
 
 import requests
-from flask import Flask, jsonify, render_template, request, send_from_directory
+from flask import Flask, jsonify, redirect, render_template, request, send_from_directory
 
 try:
     from dotenv import load_dotenv
@@ -176,14 +176,27 @@ def pid_ok(pid):
 
 
 # ---------------------------------------------------------------- routes
+def apk_path():
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "womanten.apk")
+
+
 @app.get("/")
-def home():
+def landing():
+    # the Android app opens this address inside its WebView: send it straight to the app screen
+    if "WomantenApp" in request.headers.get("User-Agent", ""):
+        return redirect("/app")
+    has = os.path.exists(apk_path())
+    return render_template("landing.html", has_apk=has, apk_mb=round(os.path.getsize(apk_path()) / 1048576) if has else 0)
+
+
+@app.get("/app")
+def app_page():
     return render_template("index.html", ai=ai_on())
 
 
 @app.get("/manifest.webmanifest")
 def manifest():
-    return jsonify(name="Womanten", short_name="Womanten", start_url="/", display="standalone", background_color="#0a0a0a", theme_color="#0a0a0a",
+    return jsonify(name="Womanten", short_name="Womanten", start_url="/app", display="standalone", background_color="#0a0a0a", theme_color="#0a0a0a",
                    description="A confidence and habits coach.", icons=[{"src": "/static/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}])
 
 
