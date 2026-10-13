@@ -225,7 +225,7 @@ namespace WomantenApp
     // ------------------------------------------------------------------ the app
     class MainForm : Form
     {
-        public const int Build = 1;
+        public const int Build = 2;
         public static readonly string SiteUrl = Environment.GetEnvironmentVariable("WOMANTEN_SITE") ?? "https://womanten.onrender.com";
         static readonly string DataDir = Environment.GetEnvironmentVariable("WOMANTEN_DIR") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Womanten");
         static readonly bool Debug = Environment.GetEnvironmentVariable("WM_DEBUG") == "1";
@@ -250,6 +250,11 @@ namespace WomantenApp
             web.CoreWebView2InitializationCompleted += WebReady;
             Controls.Add(web);
             BuildTray();
+            SystemEvents.PowerModeChanged += delegate (object o, PowerModeChangedEventArgs pe)
+            {
+                if (pe.Mode != PowerModes.Resume) return; Log("resumed from sleep");
+                var wake = new System.Windows.Forms.Timer { Interval = 6000 }; wake.Tick += delegate { wake.Stop(); try { if (web != null && web.CoreWebView2 != null) web.CoreWebView2.Reload(); } catch { } }; wake.Start();
+            };
             engine.Interval = 1000; engine.Tick += delegate { try { Engine(); } catch (Exception e) { Log("engine: " + e.Message); } }; engine.Start();
             var push = new System.Windows.Forms.Timer { Interval = 2000 }; push.Tick += delegate { PushState(); }; push.Start();
             var minute = new System.Windows.Forms.Timer { Interval = 30000 }; minute.Tick += delegate { Remind(); }; minute.Start();
@@ -298,6 +303,7 @@ namespace WomantenApp
                 bool ours = false; try { ours = new Uri(p.Uri).Host == new Uri(SiteUrl).Host; } catch { }
                 p.State = (ours && p.PermissionKind == CoreWebView2PermissionKind.Camera) ? CoreWebView2PermissionState.Allow : CoreWebView2PermissionState.Deny;
             };
+            c.ProcessFailed += delegate (object o, CoreWebView2ProcessFailedEventArgs f) { Log("process failed " + f.ProcessFailedKind); try { c.Reload(); } catch { } };
             c.NavigationStarting += delegate (object o, CoreWebView2NavigationStartingEventArgs n)
             {
                 try { var u = new Uri(n.Uri); if ((u.Scheme == "http" || u.Scheme == "https") && u.Host != new Uri(SiteUrl).Host) { n.Cancel = true; Process.Start(n.Uri); } } catch { }
@@ -305,8 +311,11 @@ namespace WomantenApp
             c.NewWindowRequested += delegate (object o, CoreWebView2NewWindowRequestedEventArgs n) { n.Handled = true; try { Process.Start(n.Uri); } catch { } };
             c.NavigationCompleted += delegate (object o, CoreWebView2NavigationCompletedEventArgs n)
             {
-                Log("navigated ok=" + n.IsSuccess + " " + c.Source);
-                if (!n.IsSuccess && c.Source.StartsWith("http")) c.NavigateToString(OfflineHtml); else PushState();
+                Log("navigated ok=" + n.IsSuccess + " status=" + n.HttpStatusCode + " err=" + n.WebErrorStatus + " " + c.Source);
+                if (!n.IsSuccess && n.WebErrorStatus == CoreWebView2WebErrorStatus.OperationCanceled) return;          // another navigation took over: not a problem
+                bool ours = false; try { ours = new Uri(c.Source).Host == new Uri(SiteUrl).Host; } catch { }
+                if ((!n.IsSuccess && c.Source.StartsWith("http")) || (n.IsSuccess && ours && (n.HttpStatusCode >= 500 || n.HttpStatusCode == 404))) { Log("showing the reconnecting page"); c.NavigateToString(OfflineHtml()); }
+                else PushState();
             };
             Log("webview ready");
             c.Navigate(pendingUrl ?? (SiteUrl + "/app"));
@@ -325,7 +334,14 @@ namespace WomantenApp
   };
 })();";
 
-        const string OfflineHtml = "<body style='background:#0a0a0a;color:#eee;font-family:Segoe UI,sans-serif;text-align:center;padding:60px 24px'><h2>You are offline</h2><p style='color:#999'>Womanten needs the internet to open. Your locks still work without it.</p><button onclick=\"location.href='https://womanten.onrender.com/app'\" style='padding:12px 22px;border-radius:12px;border:0;background:#e8998d;font-weight:700;font-size:16px'>Try again</button></body>";
+        static string OfflineHtml()
+        {
+            return ("<!doctype html><meta charset='utf-8'><body style='background:#0a0a0a;color:#eee;font-family:Segoe UI,sans-serif;text-align:center;padding:60px 24px'><h2>Reconnecting to Womanten…</h2>"
+                + "<p style='color:#999;max-width:34em;margin:12px auto'>Womanten could not be reached. If the server was asleep it can take up to a minute to wake up. I will keep trying by myself.</p>"
+                + "<p style='color:#e8998d' id='s'>Trying again in <b id='n'>5</b> seconds</p><button onclick='go()' style='padding:12px 22px;border-radius:12px;border:0;background:#e8998d;font-weight:700;font-size:16px'>Try now</button>"
+                + "<script>var t=5,busy=false;function go(){location.href='@SITE@/app';}setInterval(function(){t--;if(t<=0&&!busy){t=8;busy=true;fetch('@SITE@/health',{mode:'no-cors',cache:'no-store'}).then(function(){go();}).catch(function(){busy=false;});}"
+                + "if(t<0)t=0;document.getElementById('n').textContent=t;},1000);</script></body>").Replace("@SITE@", SiteUrl);
+        }
 
         void OnMessage(string json)
         {

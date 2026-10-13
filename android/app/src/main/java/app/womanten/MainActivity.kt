@@ -40,8 +40,11 @@ class MainActivity : ComponentActivity() {
                     if (r.url.host == host) return false
                     startActivity(Intent(Intent.ACTION_VIEW, r.url)); return true                 // anything else opens in the browser
                 }
+                override fun onReceivedHttpError(v: WebView, r: WebResourceRequest, e: android.webkit.WebResourceResponse) {
+                    if (r.isForMainFrame && (e.statusCode >= 500 || e.statusCode == 404)) v.loadDataWithBaseURL(BuildConfig.SITE, OFFLINE, "text/html", "utf-8", null)
+                }
                 override fun onReceivedError(v: WebView, r: WebResourceRequest, e: WebResourceError) {
-                    if (r.isForMainFrame) v.loadData(OFFLINE, "text/html", "utf-8")
+                    if (r.isForMainFrame) v.loadDataWithBaseURL(BuildConfig.SITE, OFFLINE, "text/html", "utf-8", null)
                 }
             }
         }
@@ -82,6 +85,6 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
-        private const val OFFLINE = "<body style='background:#0a0a0a;color:#eee;font-family:sans-serif;text-align:center;padding:48px 24px'><h2>You are offline</h2><p style='color:#999'>Womanten needs the internet to open. Your locks still work without it.</p><button onclick='location.href=\"https://womanten.onrender.com/app\"' style='padding:12px 22px;border-radius:12px;border:0;background:#e8998d;font-weight:700'>Try again</button></body>"
+        private const val OFFLINE = "<!doctype html><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><body style='background:#0a0a0a;color:#eee;font-family:sans-serif;text-align:center;padding:48px 24px'><h2>Reconnecting to Womanten…</h2><p style='color:#999'>Womanten could not be reached. If the server was asleep it can take up to a minute to wake up. I will keep trying by myself.</p><p style='color:#e8998d' id='s'>Trying again in <b id='n'>5</b> seconds</p><button onclick='go()' style='padding:12px 22px;border-radius:12px;border:0;background:#e8998d;font-weight:700;font-size:16px'>Try now</button><script>var t=5,busy=false;function go(){location.href='https://womanten.onrender.com/app';}setInterval(function(){t--;if(t<=0&&!busy){t=8;busy=true;fetch('https://womanten.onrender.com/health',{mode:'no-cors',cache:'no-store'}).then(function(){go();}).catch(function(){busy=false;});}if(t<0)t=0;document.getElementById('n').textContent=t;},1000);</script></body>"
     }
 }
