@@ -47,14 +47,15 @@ footer { border-top: 1px solid var(--line); padding: 36px 0 60px; text-align: ce
 </head>
 <body>
 <nav><div class="wrap"><a class="brand" href="/"><i>&#9679;</i> Womanten</a>
-  <div class="links"><a href="#lock">The lock</a><a href="#features">Features</a><a href="#safe">Safe by design</a><a href="#faq">Questions</a><a class="btn sm primary" href="/app">Open the app</a></div></div></nav>
+  <div class="links"><a href="#lock">The lock</a><a href="#features">Features</a><a href="#windows">Windows</a><a href="#safe">Safe by design</a><a href="#faq">Questions</a><a class="btn sm primary" href="/app">Open the app</a></div></div></nav>
 
 <header class="hero"><div class="wrap">
-  <div class="kick">An app and a website</div>
+  <div class="kick">Android, Windows and the web</div>
   <h1>Confidence, <em>one small step</em> at a time.</h1>
   <p class="lead">An AI coach, a plan for your week, workouts and food you enjoy, and a lock that keeps TikTok, Instagram and YouTube shut until you earn your scrolls with a push-up.</p>
   <div class="cta">
     {% if has_apk %}<a class="btn primary" href="/download">&#11015; Get the Android app</a>{% else %}<span class="btn">Android app coming soon</span>{% endif %}
+    {% if has_win %}<a class="btn" href="/download/windows">&#129695; Get the Windows app</a>{% endif %}
     <a class="btn" href="/app">&#127760; Use it on the web</a>
   </div>
   <p class="fine">Free. No account. Your plans, habits and journal stay on your device.{% if has_apk %} Android 10 or newer, {{ apk_mb }} MB.{% endif %}</p>
@@ -86,7 +87,7 @@ footer { border-top: 1px solid var(--line); padding: 36px 0 60px; text-align: ce
     <div class="card"><h3>🧠 Mind</h3><ul><li><b>AI coach</b> that is kind and practical</li><li><b>Reframe a harsh thought</b> into a kinder, truer one</li><li><b>Journal</b> with a daily question and a wins wall</li><li><b>Guided routines</b>, breathing and a study timer</li><li><b>Letter to future me</b> that opens on a date you choose</li></ul></div>
     <div class="card"><h3>🗣️ Confidence</h3><ul><li><b>Practice a conversation</b> with an AI partner and get a tip</li><li><b>Brave dare</b> of the day, 30 to complete</li><li><b>Confidence check-in</b> every week, with a chart</li><li><b>Challenges with friends</b> using a 6-letter code</li><li><b>Daily affirmation</b> and a streak-saver nudge</li></ul></div>
     <div class="card"><h3>📊 Progress</h3><ul><li><b>Insights</b>: 14 days of sleep, water, movement and mood</li><li><b>Pattern finder</b>: does sleep or movement lift your mood?</li><li><b>AI weekly review</b> that reads your numbers</li><li><b>Levels and 19 badges</b></li><li><b>Share your week</b> and back up your data</li></ul></div>
-    <div class="card"><h3>📱 The app</h3><ul><li><b>App lock</b> with push-ups, squats, jacks and plank</li><li><b>Focus mode</b> that really blocks apps</li><li><b>Lock hours</b>, like nights or school time</li><li><b>Daily reminders</b> for plan, water and journal</li><li>Works as a <b>website</b> too, nothing to install</li></ul></div>
+    <div class="card"><h3>📱 The app</h3><ul><li><b>App lock</b> with push-ups, squats, jacks and plank</li><li><b>Focus mode</b> that really blocks apps</li><li><b>Lock hours</b>, like nights or school time</li><li><b>Daily reminders</b> for plan, water and journal</li><li><b>Windows app</b> with the same lock for your PC</li><li>Works as a <b>website</b> too, nothing to install</li></ul></div>
   </div>
 </div></section>
 
@@ -113,11 +114,23 @@ footer { border-top: 1px solid var(--line); padding: 36px 0 60px; text-align: ce
   <div class="cta" style="justify-content:flex-start">{% if has_apk %}<a class="btn primary" href="/download">&#11015; Get the Android app</a>{% endif %}<a class="btn" href="/app">&#127760; Use it on the web</a></div>
 </div></section>
 
+<section id="windows"><div class="wrap">
+  <h2>On your <em>Windows PC</em></h2>
+  <p class="sub">The Windows app locks distracting programs and websites in your browser (TikTok, Instagram, YouTube and more) until you earn time with reps on your webcam. It lives in the tray, sends gentle reminders, and has Focus mode.</p>
+  <ol class="install">
+    <li>Download the zip and unzip it anywhere.</li>
+    <li>Open <b>Womanten.exe</b>. If Windows says it protected your PC, press <b>More info</b>, then <b>Run anyway</b>. The app is new and not signed yet.</li>
+    <li>Right-click the tray icon and choose <b>Lock settings</b> to pick what to lock and which exercise unlocks it.</li>
+  </ol>
+  <div class="cta" style="justify-content:flex-start">{% if has_win %}<a class="btn primary" href="/download/windows">&#129695; Get the Windows app ({{ win_mb }} MB)</a>{% endif %}</div>
+  <p class="sub">Needs 64-bit Windows 10 or 11. Like on Android, it only sees which program or tab is in front, never what is inside it.</p>
+</div></section>
+
 <section id="faq"><div class="wrap">
   <h2>Common <em>questions</em></h2>
   <div style="margin-top:26px">
     <details><summary>Is it free?</summary><p>Yes. There is no account and no payment. The AI features use a small amount of AI each time, so very heavy use in one day may be limited.</p></details>
-    <details><summary>Does it work on iPhone?</summary><p>The website works on any phone, and you can add it to your home screen. The app lock needs Android, because iPhone does not let an app lock other apps.</p></details>
+    <details><summary>Does it work on iPhone or Mac?</summary><p>The website works on any phone or computer, and you can add it to your home screen. The app lock needs Android or Windows, because iPhone and Mac do not let an app lock other apps.</p></details>
     <details><summary>How does the lock know I did a push-up?</summary><p>Your camera and an on-device pose model watch your arms. It counts a rep when you lower your body and push back up. It is not perfect, so go slowly and keep your arms in view.</p></details>
     <details><summary>Can I cheat the lock?</summary><p>You can turn it off in Android's Accessibility settings. That is on purpose: it is a promise you keep to yourself, and it works best when you choose it.</p></details>
     <details><summary>Where is my data?</summary><p>On your own phone or browser. The AI features send only what you ask about (like your question or your numbers for a review) to be answered, and nothing is sold. Use <b>Back up your data</b> to keep a copy.</p></details>

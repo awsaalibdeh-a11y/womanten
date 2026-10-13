@@ -1,3 +1,7 @@
 __pycache__/
 .env
 *.db
+windows/_pkg_dl/
+windows/dist/
+windows/test/
+windows/lib/

@@ -186,7 +186,14 @@ def landing():
     if "WomantenApp" in request.headers.get("User-Agent", ""):
         return redirect("/app")
     has = os.path.exists(apk_path())
-    return render_template("landing.html", has_apk=has, apk_mb=round(os.path.getsize(apk_path()) / 1048576) if has else 0)
+    win = os.path.exists(windows_zip())
+    return render_template("landing.html", has_apk=has, apk_mb=round(os.path.getsize(apk_path()) / 1048576) if has else 0,
+                           has_win=win, win_mb=round(os.path.getsize(windows_zip()) / 1048576, 1) if win else 0)
+
+
+@app.get("/reps")
+def reps_page():
+    return render_template("reps.html")
 
 
 @app.get("/app")
@@ -204,6 +211,26 @@ def manifest():
 def sw():
     return app.response_class("self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));self.addEventListener('fetch',()=>{});",
                               mimetype="application/javascript")
+
+
+def windows_zip():
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "Womanten-Windows.zip")
+
+
+@app.get("/api/windows/version")
+def windows_version():
+    try:
+        build = int(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "windows", "BUILD")).read().strip())
+    except (OSError, ValueError):
+        build = 0
+    return jsonify(build=build, url="/download/windows")
+
+
+@app.get("/download/windows")
+def download_windows():
+    if not os.path.exists(windows_zip()):
+        return err("The Windows app is not uploaded yet.", 404)
+    return send_from_directory(os.path.dirname(windows_zip()), "Womanten-Windows.zip", as_attachment=True, mimetype="application/zip")
 
 
 @app.get("/download")
@@ -424,7 +451,7 @@ def challenge_get(code):
 def headers(resp):
     resp.headers["X-Content-Type-Options"] = "nosniff"
     resp.headers["Referrer-Policy"] = "same-origin"
-    resp.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    resp.headers["Permissions-Policy"] = "camera=(self), microphone=(), geolocation=()"
     return resp
 
 

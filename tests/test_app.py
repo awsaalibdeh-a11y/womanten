@@ -27,6 +27,17 @@ class Basics(unittest.TestCase):
         r = self.c.get("/", headers={"User-Agent": "Mozilla/5.0 (Linux; Android 14) WomantenApp"})
         self.assertEqual(r.status_code, 302); self.assertTrue(r.headers["Location"].endswith("/app"))
 
+    def test_camera_page_exists_and_the_camera_is_allowed(self):
+        r = self.c.get("/reps")
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("counters.js", r.get_data(as_text=True))
+        self.assertIn("camera=(self)", r.headers["Permissions-Policy"])
+        self.assertIn("microphone=()", r.headers["Permissions-Policy"])
+
+    def test_windows_version_endpoint(self):
+        d = self.c.get("/api/windows/version").get_json()
+        self.assertGreaterEqual(d["build"], 1); self.assertEqual(d["url"], "/download/windows")
+
     def test_manifest_starts_at_the_app(self):
         self.assertEqual(self.c.get("/manifest.webmanifest").get_json()["start_url"], "/app")
 

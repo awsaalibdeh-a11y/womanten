@@ -274,7 +274,7 @@ const NATIVE = window.WomantenNative || null;
 if (NATIVE_FOCUS()) $("focusNote").textContent = "Real focus: your locked apps are blocked until the timer ends. To leave early you have to earn it with 10 reps on camera.";
 function renderLock() {
   if (!NATIVE) return; $("lockWeb").hidden = true; $("lockApp").hidden = false;
-  try { const i = JSON.parse(NATIVE.lockInfo()); $("lockScrolls").textContent = i.enabled ? (i.scrolls > 0 ? i.scrolls + " scrolls left" : "Locked: do " + (i.exercise || "push-ups").toLowerCase()) : "Locks are off"; $("lockSub").textContent = i.enabled ? "Locked: " + (i.apps.length ? i.apps.join(", ") : "no apps chosen yet") + ". Each " + (i.unit || "push-up") + " earns " + i.perPushup + " scrolls." : "Turn the locks on to start. Each push-up earns scrolls on the apps you choose."; } catch (e) { /* older app */ }
+  try { const i = JSON.parse(NATIVE.lockInfo()); $("lockScrolls").textContent = i.enabled ? (i.scrolls > 0 ? i.scrolls + " " + (i.currency || "scrolls") + " left" : "Locked: do " + (i.exercise || "push-ups").toLowerCase()) : "Locks are off"; $("lockSub").textContent = i.enabled ? "Locked: " + (i.apps.length ? i.apps.join(", ") : "no apps chosen yet") + ". Each " + (i.unit || "push-up") + " earns " + i.perPushup + " " + (i.currency || "scrolls") + "." : "Turn the locks on to start. Each push-up earns scrolls on the apps you choose."; } catch (e) { /* older app */ }
 }
 $("lockOpen").onclick = () => NATIVE && NATIVE.openLock();
 $("lockPush").onclick = () => NATIVE && NATIVE.openPushups();
