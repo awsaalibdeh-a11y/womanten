@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b0d">
+<title>Womanten</title>
+<meta name="description" content="A confidence and habits coach: a weekly plan, habits, gentle movement, a focus timer, an AI coach and challenges with friends. Private, and never about your looks.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%2314141a'/%3E%3Ccircle cx='32' cy='32' r='14' fill='none' stroke='%23e48fcf' stroke-width='5'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><i>&#9679;</i> Womanten</div>
+  <div class="chips"><span class="chip" id="streak" title="Days in a row">&#128293; 0</span><span class="chip" id="points" title="Points">&#11088; 0</span></div>
+</header>
+
+<main id="app" class="wrap">
+  <section id="tab-today" class="tab on">
+    <div class="hello"><h1 id="hello">Hello</h1><p id="sub" class="muted">Small steps, every day.</p></div>
+    <div class="bar"><div id="barfill"></div></div>
+    <p class="muted tiny" id="barlabel"></p>
+
+    <div class="card" id="planCard">
+      <div class="row"><h2>Today's plan</h2><button class="ghost" id="buildWeek">Build my week</button></div>
+      <div id="slots"></div>
+      <details id="weekAll"><summary>See the whole week</summary><div id="weekList"></div></details>
+    </div>
+
+    <div class="card">
+      <div class="row"><h2>Habits</h2><button class="ghost" id="addHabit">+ Add</button></div>
+      <div id="habits"></div>
+    </div>
+
+    <div class="card">
+      <h2>Move a little</h2>
+      <p class="muted tiny">Gentle and your pace. No counting calories here, ever.</p>
+      <div class="pills" id="quick"></div>
+      <div class="row2"><select id="wtype"><option>Walk</option><option>Stretch</option><option>Dance</option><option>Run</option><option>Workout</option><option>Sport</option><option>Yoga</option></select>
+        <input id="wmin" type="number" min="1" max="300" placeholder="minutes" inputmode="numeric"><button id="wlog">Log it</button></div>
+      <p class="muted tiny" id="wsum"></p>
+    </div>
+
+    <div class="card">
+      <h2>How are you today?</h2>
+      <div class="moods" id="moods"></div>
+      <div class="row2"><div class="stepper"><span>&#128167; Water</span><button id="wMinus">&minus;</button><b id="water">0</b><button id="wPlus">+</button></div>
+        <div class="stepper"><span>&#127769; Sleep</span><button id="sMinus">&minus;</button><b id="sleep">0</b><button id="sPlus">+</button></div></div>
+    </div>
+
+    <div class="card" id="focusCard">
+      <h2>Focus time</h2>
+      <p class="muted tiny">Put your phone down and do one thing. A website can't block other apps, so this is a promise to yourself: ending early needs 10 push-ups or one minute of breathing.</p>
+      <div id="focusIdle"><div class="pills" id="fdur"></div><button id="fstart">Start focus</button></div>
+      <div id="focusRun" hidden><div class="clock" id="fclock">10:00</div><button class="ghost" id="fend">End early</button></div>
+      <div id="focusGate" hidden>
+        <p>Pick how to leave early:</p>
+        <div class="pills"><button id="gPush">10 push-ups</button><button id="gBreath">Breathe for a minute</button><button class="ghost" id="gStay">Keep going</button></div>
+        <div id="gArea" class="gate"></div>
+      </div>
+    </div>
+
+    <div class="card"><h2>This week</h2><div id="review"></div></div>
+  </section>
+
+  <section id="tab-coach" class="tab">
+    <div class="card chatcard">
+      <div class="row"><h2>Your coach</h2><span class="muted tiny" id="aiTag"></span></div>
+      <div id="chat" class="chat"></div>
+      <div class="pills" id="starters"></div>
+      <form id="chatForm" class="send"><input id="chatIn" maxlength="500" placeholder="Tell your coach what is on your mind" autocomplete="off"><button>Send</button></form>
+      <p class="muted tiny">Your coach is an AI. It never judges looks or gives diet advice. If you ever feel unsafe, tell a trusted adult or your local emergency number.</p>
+    </div>
+
+    <div class="card">
+      <div class="row"><h2>Challenges with friends</h2></div>
+      <div class="row2"><input id="chTitle" maxlength="60" placeholder="e.g. 10 minutes of walking"><select id="chDays"><option value="7">7 days</option><option value="14">14 days</option><option value="21">21 days</option><option value="30">30 days</option></select><button id="chMake">Start</button></div>
+      <div class="row2"><input id="chCode" maxlength="6" placeholder="Friend's code" style="text-transform:uppercase"><button class="ghost" id="chJoin">Join</button></div>
+      <div id="challenges"></div>
+    </div>
+  </section>
+</main>
+
+<nav class="tabs"><button class="on" data-tab="today"><i>&#127775;</i>Today</button><button data-tab="coach"><i>&#128172;</i>Coach</button></nav>
+
+<div id="sheet" class="sheet" hidden><div class="panel">
+  <h2>Welcome to Womanten</h2>
+  <p class="muted">Everything you add stays on this device. Nobody sees it unless you join a challenge.</p>
+  <label>What should I call you?</label><input id="obName" maxlength="24" placeholder="Your name" autocomplete="off">
+  <label>What do you want to work on?</label>
+  <div class="pills" id="obFocus"></div>
+  <button id="obGo">Let's go</button>
+</div></div>
+
+<div id="toast" class="toast" hidden></div>
+<script>window.WM = { ai: {{ 'true' if ai else 'false' }} };</script>
+<script src="/static/app.js"></script>
+<script src="/static/hub.js" data-app="womanten" defer></script>
+</body>
+</html>
