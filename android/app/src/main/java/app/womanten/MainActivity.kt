@@ -61,8 +61,14 @@ class MainActivity : ComponentActivity() {
             val pm = packageManager
             val names = Prefs.locked(this@MainActivity).mapNotNull { runCatching { pm.getApplicationLabel(pm.getApplicationInfo(it, 0)).toString() }.getOrNull() }
             return JSONObject().put("enabled", Prefs.enabled(this@MainActivity) && LockService.isOn(this@MainActivity)).put("scrolls", Prefs.scrolls(this@MainActivity))
-                .put("perPushup", Prefs.perPushup(this@MainActivity)).put("apps", JSONArray(names)).toString()
+                .put("perPushup", Prefs.perPushup(this@MainActivity)).put("repsToday", Prefs.pushupsToday(this@MainActivity)).put("usedToday", Prefs.scrollsUsedToday(this@MainActivity)).put("schedule", if (Prefs.scheduleOn(this@MainActivity)) "${Prefs.schedFrom(this@MainActivity)}:00 to ${Prefs.schedTo(this@MainActivity)}:00" else "").put("exercise", Prefs.exercise(this@MainActivity).label).put("unit", Prefs.exercise(this@MainActivity).unit).put("apps", JSONArray(names)).toString()
         }
+        /** Real focus: the chosen apps are blocked for this many minutes. Returns false if the lock service is not on yet. */
+        @JavascriptInterface fun startFocus(minutes: Int): Boolean {
+            if (!LockService.isOn(this@MainActivity) || Prefs.locked(this@MainActivity).isEmpty()) { openLock(); return false }
+            Prefs.startFocus(this@MainActivity, minutes); return true
+        }
+        @JavascriptInterface fun focusLeft(): Int = Prefs.focusLeftSeconds(this@MainActivity).toInt()
         @JavascriptInterface fun openLock() { startActivity(Intent(this@MainActivity, LockSettingsActivity::class.java)) }
         @JavascriptInterface fun openPushups() { startActivity(Intent(this@MainActivity, PushUpActivity::class.java)) }
         @JavascriptInterface fun saveFile(name: String, text: String) {

@@ -16,7 +16,7 @@ class RepCounter(private val upAbove: Double = 150.0, private val downBelow: Dou
     /** Feed one angle in degrees with the time in ms. Returns true when this frame finished a rep. */
     fun update(angle: Double, nowMs: Long): Boolean {
         if (angle.isNaN()) return false
-        smooth = if (smooth.isNaN()) angle else smooth * 0.5 + angle * 0.5
+        smooth = if (smooth.isNaN()) angle else smooth * 0.4 + angle * 0.6                // light smoothing: enough to ignore jitter, quick enough not to miss a fast rep
         when {
             smooth >= upAbove -> {
                 val finished = phase == Phase.DOWN && nowMs - lastRepAt >= minGapMs

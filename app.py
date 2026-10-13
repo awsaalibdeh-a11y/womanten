@@ -217,6 +217,8 @@ def coach():
         return err("Say something first.")
     name = clean(d.get("name"), 30) or "friend"
     focus = [f for f in (d.get("focus") or []) if f in FOCUS]
+    if plans.is_crisis(msgs[-1]["content"]):
+        return jsonify(reply=plans.SUPPORT_MESSAGE, ai=False, support=True)
     if not ai_on():
         return jsonify(reply=fallback_coach(msgs[-1]["content"]), ai=False)
     system = COACH_RULES + f" The person's name is {name}." + (f" They want to work on: {', '.join(focus)}." if focus else "")
@@ -287,6 +289,68 @@ def food_plan():
         return err("Too many plans for now. Try again later.", 429)
     x = plans.food_inputs(request.get_json(silent=True) or {})
     return ai_plan(plans.food_prompt, plans.clean_food, x, plans.fallback_food, "plan")
+
+
+@app.post("/api/review")
+def review():
+    if limited("plan", 20):
+        return err("Too many reviews for now. Try again later.", 429)
+    d = request.get_json(silent=True) or {}
+    days = plans.clean_days(d.get("days"))
+    try:
+        streak = max(0, min(999, int(d.get("streak") or 0)))
+    except (TypeError, ValueError):
+        streak = 0
+    name, focus = clean(d.get("name"), 30), [f for f in (d.get("focus") or []) if f in FOCUS]
+    if ai_on() and days:
+        try:
+            raw = ask([{"role": "system", "content": plans.PLAN_RULES}, {"role": "user", "content": plans.review_prompt(days, streak, name, focus)}], want_json=True, max_tokens=900)
+            return jsonify(review=plans.clean_review(raw), ai=True)
+        except Exception:
+            pass
+    return jsonify(review=plans.fallback_review(days, streak), ai=False)
+
+
+@app.post("/api/reframe")
+def reframe():
+    if limited("plan", 20):
+        return err("Too many for now. Try again later.", 429)
+    d = request.get_json(silent=True) or {}
+    thought = clean(d.get("thought"), 300)
+    if not thought:
+        return err("Write the thought first.")
+    if plans.is_crisis(thought):
+        return jsonify(support=plans.SUPPORT_MESSAGE, ai=False)
+    if ai_on():
+        try:
+            raw = ask([{"role": "system", "content": plans.PLAN_RULES}, {"role": "user", "content": plans.reframe_prompt(thought, clean(d.get("name"), 30))}], want_json=True, max_tokens=700)
+            return jsonify(reframe=plans.clean_reframe(raw), ai=True)
+        except Exception:
+            pass
+    return jsonify(reframe=plans.fallback_reframe(thought), ai=False)
+
+
+@app.post("/api/practice")
+def practice():
+    if limited("coach", 80):
+        return err("Take a short break and try again soon.", 429)
+    d = request.get_json(silent=True) or {}
+    scenario = d.get("scenario") if d.get("scenario") in plans.SCENARIOS else "hangout"
+    msgs = [{"role": "user" if m.get("role") == "user" else "assistant", "content": clean(m.get("text"), 400)}
+            for m in (d.get("messages") or [])[-12:] if isinstance(m, dict) and clean(m.get("text"), 400)]
+    if msgs and plans.is_crisis(msgs[-1]["content"]):
+        return jsonify(support=plans.SUPPORT_MESSAGE, ai=False)
+    turns = sum(1 for m in msgs if m["role"] == "user")
+    if ai_on():
+        try:
+            raw = ask([{"role": "system", "content": plans.practice_prompt(scenario, clean(d.get("name"), 30))}] + (msgs or [{"role": "user", "content": "(Start the scene.)"}]), want_json=True, max_tokens=500)
+            out = plans.clean_practice(raw)
+            if not turns:
+                out["tip"] = ""                       # nothing has been said yet, so there is nothing to coach
+            return jsonify({**out, "ai": True})
+        except Exception:
+            pass
+    return jsonify({**plans.fallback_practice(scenario, turns), "ai": False})
 
 
 @app.post("/api/challenge")

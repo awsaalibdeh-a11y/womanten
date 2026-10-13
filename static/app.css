@@ -73,3 +73,25 @@ a.btnlink { display: inline-block; text-decoration: none; background: var(--rose
 #pformBox { max-height: 88vh; overflow-y: auto; }
 .cyc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; } .cyc div { background: var(--card2); border: 1px solid var(--line); border-radius: 14px; padding: 10px; text-align: center; } .cyc b { display: block; font-size: 22px; font-weight: 500; } .cyc span { font-size: 12px; color: var(--muted); }
 .note { font-size: 12px; color: var(--muted); margin-top: 10px; }
+
+#lvFill { height: 100%; width: 0; background: linear-gradient(90deg, var(--rose2), var(--rose)); border-radius: 99px; transition: width .5s; }
+.badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.badge { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; font-size: 22px; background: var(--card2); border: 1px solid var(--line); }
+.badge.off { filter: grayscale(1); opacity: .28; }
+.chart { margin-top: 12px; } .chart .lab { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.chart svg { width: 100%; height: 56px; display: block; } .chart rect { fill: var(--rose); } .chart rect.z { fill: #2b2b2b; } .chart .goal { stroke: #4a4a4a; stroke-dasharray: 3 3; }
+.pat { background: var(--card2); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; margin-top: 10px; font-size: 14px; }
+.rev { margin-top: 12px; border: 1px solid var(--rose2); border-radius: 16px; padding: 14px; background: #161110; } .rev h3 { font-size: 14px; margin: 10px 0 4px; color: var(--rose); } .rev li { margin: 4px 0 4px 18px; font-size: 14px; }
+
+.affirm { margin-top: 6px; font-size: 15px; color: var(--rose); }
+.tools details { border-top: 1px solid var(--line); padding: 4px 0; } .tools details:first-of-type { border-top: 0; margin-top: 6px; } .tools summary { font-size: 16px; color: var(--ink); margin: 0; padding: 10px 0; }
+.tools .inner { padding: 4px 0 12px; }
+.dare { font-size: 17px; line-height: 1.4; padding: 12px 14px; border-radius: 14px; background: var(--card2); border: 1px solid var(--line); margin: 8px 0; }
+.prog { font-size: 13px; color: var(--muted); }
+.step { text-align: center; padding: 8px 0; } .step .big { font-size: 40px; font-weight: 300; font-variant-numeric: tabular-nums; } .step .txt { font-size: 17px; margin: 8px 0; min-height: 50px; }
+.goal { padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px; } .goal:first-of-type { border-top: 0; } .goal .gt { display: flex; justify-content: space-between; gap: 8px; }
+.win { padding: 7px 0; border-top: 1px solid var(--line); font-size: 14px; } .win small { color: var(--muted); }
+.support { border-color: #5a3a35; background: #151110; }
+.pcard { padding: 8px 12px; border-radius: 14px; margin-top: 6px; font-size: 14px; } .pcard.tip { background: #1b1613; border: 1px solid var(--rose2); color: #e9c9c3; font-size: 13px; }
+.sharebox { white-space: pre-wrap; background: var(--card2); border: 1px solid var(--line); border-radius: 14px; padding: 12px; font-size: 14px; }
+.moodtags .on { background: var(--rose2); }

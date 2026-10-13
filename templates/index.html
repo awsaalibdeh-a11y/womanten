@@ -18,10 +18,16 @@
 
 <main id="app" class="wrap">
   <section id="tab-today" class="tab on">
-    <div class="hello"><h1 id="hello">Hello</h1><p id="sub" class="muted">Small steps, every day.</p></div>
+    <div class="hello"><h1 id="hello">Hello</h1><p id="sub" class="muted">Small steps, every day.</p><p id="affirm" class="affirm"></p></div>
     <div class="bar"><div id="barfill"></div></div>
     <p class="muted tiny" id="barlabel"></p>
 
+
+    <div class="card" id="levelCard">
+      <div class="row"><h2 id="lvTitle">Level 1</h2><span class="muted tiny" id="lvNext"></span></div>
+      <div class="bar"><div id="lvFill"></div></div>
+      <div class="badges" id="badges"></div>
+    </div>
 
     <div class="card lockbox" id="lockCard">
       <h2>&#128274; Lock your scrolling apps</h2>
@@ -70,6 +76,7 @@
       <h2>How are you today?</h2>
       <p class="hint">Tap the face that fits. Then track two things that make a big difference:</p>
       <div class="moods" id="moods"></div>
+      <div class="pills" id="moodTags"></div>
       <div class="meter">
         <div class="m"><div class="mt"><div><b class="t">&#128167; Water</b><div class="goal" id="waterGoal">Goal: 8 glasses a day</div></div><div class="ctl"><button id="wMinus" aria-label="One less glass">&minus;</button><output id="water">0</output><button id="wPlus" aria-label="One more glass">+</button></div></div><p class="hint" style="margin:8px 0 0">Tap + each time you finish a glass of water (about 250 ml).</p><div class="mbar"><i id="waterBar"></i></div></div>
         <div class="m"><div class="mt"><div><b class="t">&#127769; Sleep</b><div class="goal" id="sleepGoal">Goal: 8 hours a night</div></div><div class="ctl"><button id="sMinus" aria-label="One less hour">&minus;</button><output id="sleep">0</output><button id="sPlus" aria-label="One more hour">+</button></div></div><p class="hint" style="margin:8px 0 0">Tap + for each hour you slept last night. Do this once in the morning.</p><div class="mbar"><i id="sleepBar"></i></div></div>
@@ -85,7 +92,7 @@
 
     <div class="card" id="focusCard">
       <h2>Focus time</h2>
-      <p class="muted tiny">Put your phone down and do one thing. A website can't block other apps, so this is a promise to yourself: ending early needs 10 push-ups or one minute of breathing.</p>
+      <p class="muted tiny" id="focusNote">Put your phone down and do one thing. A website can't block other apps, so this is a promise to yourself: ending early needs 10 push-ups or one minute of breathing.</p>
       <div id="focusIdle"><div class="pills" id="fdur"></div><button id="fstart">Start focus</button></div>
       <div id="focusRun" hidden><div class="clock" id="fclock">10:00</div><button class="ghost" id="fend">End early</button></div>
       <div id="focusGate" hidden>
@@ -93,6 +100,25 @@
         <div class="pills"><button id="gPush">10 push-ups</button><button id="gBreath">Breathe for a minute</button><button class="ghost" id="gStay">Keep going</button></div>
         <div id="gArea" class="gate"></div>
       </div>
+    </div>
+
+    <div class="card tools">
+      <h2>Toolbox</h2>
+      <details id="tDare"><summary>🎯 Brave dare of the day</summary><div id="dareBody"></div></details>
+      <details id="tRoutine"><summary>🧘 Guided routines</summary><div id="routBody"></div></details>
+      <details id="tStudy"><summary>📚 Study timer (25 on, 5 off)</summary><div id="studyBody"></div></details>
+      <details id="tGoals"><summary>🏁 Weekly goals</summary><div id="goalBody"></div></details>
+      <details id="tWins"><summary>🏆 Wins wall</summary><div id="winBody"></div></details>
+      <details id="tShare"><summary>📤 Share my week</summary><div id="shareBody"></div></details>
+    </div>
+
+    <div class="card" id="insightCard">
+      <h2>Insights</h2>
+      <p class="hint">The last 14 days, so you can see what actually helps you.</p>
+      <div id="charts"></div>
+      <div id="patterns"></div>
+      <div class="row2"><button id="revGo">Get my AI weekly review</button></div>
+      <div id="revOut"></div>
     </div>
 
     <div class="card"><h2>This week</h2><div id="review"></div></div>
@@ -128,6 +154,27 @@
       <div class="pills" id="starters"></div>
       <form id="chatForm" class="send"><input id="chatIn" maxlength="500" placeholder="Tell your coach what is on your mind" autocomplete="off"><button>Send</button></form>
       <p class="muted tiny">Your coach is an AI. It never judges looks or gives diet advice. If you ever feel unsafe, tell a trusted adult or your local emergency number.</p>
+    </div>
+
+    <div class="card">
+      <h2>Practice a conversation</h2>
+      <p class="hint">Rehearse something that feels scary with a friendly AI partner. It gives you a tip after each thing you say.</p>
+      <div class="row2"><select id="prScene"><option value="hangout">Ask a friend to hang out</option><option value="class">Speak up in class</option><option value="cafe">Order at a cafe</option><option value="say-no">Say no politely</option><option value="new">Meet someone new</option><option value="help">Ask a teacher for help</option></select><button id="prStart">Start</button></div>
+      <div id="prChat" class="chat" style="min-height:0"></div>
+      <form class="send" id="prForm" hidden><input id="prIn" maxlength="300" placeholder="What do you say?" autocomplete="off"><button>Say it</button></form>
+    </div>
+
+    <div class="card">
+      <h2>Reframe a harsh thought</h2>
+      <p class="hint">Write the mean thing your mind said. I will help you see it more kindly and more truthfully.</p>
+      <textarea id="rfIn" maxlength="300" placeholder="For example: I always mess everything up"></textarea>
+      <div class="row2"><button id="rfGo">Help me reframe it</button></div>
+      <div id="rfOut"></div>
+    </div>
+
+    <div class="card support">
+      <h2>Need support right now?</h2>
+      <p class="hint">If you are in danger or thinking about hurting yourself, call your local emergency number now and tell a trusted adult today. You can find a free helpline for your country at <b>findahelpline.com</b>. You do not have to carry hard things alone.</p>
     </div>
 
     <div class="card">

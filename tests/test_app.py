@@ -107,6 +107,76 @@ class Plans(unittest.TestCase):
             womanten.plans.clean_workout('{"days":[{"day":"Mon"}]}', {})
 
 
+class Review(unittest.TestCase):
+    def setUp(self):
+        os.environ.pop("OPENAI_API_KEY", None)
+        womanten._hits.clear()
+        self.c = womanten.app.test_client()
+
+    def test_empty_review_is_encouraging(self):
+        r = self.c.post("/api/review", json={"days": []}).get_json()["review"]
+        self.assertTrue(r["summary"] and r["wins"] and r["try"])
+
+    def test_review_uses_the_numbers(self):
+        days = [{"d": f"2026-10-0{i}", "mood": 3, "sleep": 5, "water": 2, "min": 0, "tasks": 1, "habits": 1} for i in range(1, 6)]
+        r = self.c.post("/api/review", json={"days": days, "streak": 5}).get_json()["review"]
+        self.assertIn("5 day streak", " ".join(r["wins"]))
+        self.assertIn("sleep", " ".join(r["try"]).lower())
+
+    def test_review_cleans_junk_input(self):
+        r = self.c.post("/api/review", json={"days": ["x", {"d": "<script>" * 9, "mood": 99, "sleep": "abc", "water": -4}] * 30, "streak": "NaN"})
+        self.assertEqual(r.status_code, 200)
+
+    def test_review_has_no_weight_or_calorie_talk(self):
+        text = str(womanten.plans.fallback_review([{"d": "x", "mood": 1, "sleep": 4, "water": 1, "min": 0, "tasks": 0, "habits": 0}] * 7, 0)).lower()
+        for w in ("calorie", "weight", "diet", "look"):
+            self.assertNotIn(w, text)
+
+    def test_bad_ai_review_is_rejected(self):
+        with self.assertRaises(Exception):
+            womanten.plans.clean_review('{"summary":"","wins":[],"try":[]}')
+
+
+class Support(unittest.TestCase):
+    def setUp(self):
+        os.environ.pop("OPENAI_API_KEY", None)
+        womanten._hits.clear()
+        self.c = womanten.app.test_client()
+
+    def test_crisis_words_get_the_support_message_everywhere(self):
+        r = self.c.post("/api/coach", json={"messages": [{"role": "user", "text": "i want to die"}]}).get_json()
+        self.assertTrue(r["support"]); self.assertIn("trusted adult", r["reply"]); self.assertIn("findahelpline.com", r["reply"])
+        r = self.c.post("/api/reframe", json={"thought": "I want to kill myself"}).get_json()
+        self.assertIn("trusted adult", r["support"])
+        r = self.c.post("/api/practice", json={"scenario": "class", "messages": [{"role": "user", "text": "I hurt myself"}]}).get_json()
+        self.assertIn("trusted adult", r["support"])
+
+    def test_reframe_needs_a_thought_and_returns_all_parts(self):
+        self.assertEqual(self.c.post("/api/reframe", json={"thought": ""}).status_code, 400)
+        r = self.c.post("/api/reframe", json={"thought": "Nobody likes me"}).get_json()["reframe"]
+        self.assertTrue(r["reframe"] and r["questions"] and r["action"])
+
+    def test_practice_opens_and_continues_for_every_scenario(self):
+        for sc in womanten.plans.SCENARIOS:
+            first = self.c.post("/api/practice", json={"scenario": sc, "messages": []}).get_json()
+            self.assertTrue(first["reply"])
+            self.assertEqual(first["tip"], "")
+            nxt = self.c.post("/api/practice", json={"scenario": sc, "messages": [{"role": "bot", "text": first["reply"]}, {"role": "user", "text": "Hi, I wanted to ask you something"}]}).get_json()
+            self.assertTrue(nxt["reply"] and nxt["tip"])
+
+    def test_unknown_scenario_is_safe(self):
+        self.assertEqual(self.c.post("/api/practice", json={"scenario": "<x>", "messages": []}).status_code, 200)
+
+    def test_crisis_detector_does_not_fire_on_normal_talk(self):
+        for ok in ("I am nervous about my exam", "I want to kill it in my presentation", "I like cutting vegetables"):
+            self.assertFalse(womanten.plans.is_crisis(ok), ok)
+
+    def test_bad_ai_output_is_rejected(self):
+        for fn, raw in ((womanten.plans.clean_reframe, '{"reframe":""}'), (womanten.plans.clean_practice, '{"reply":""}')):
+            with self.assertRaises(Exception):
+                fn(raw)
+
+
 class Challenges(unittest.TestCase):
     def setUp(self):
         womanten._hits.clear()

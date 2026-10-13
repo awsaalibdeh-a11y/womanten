@@ -17,25 +17,27 @@ class LockService : AccessibilityService() {
     override fun onAccessibilityEvent(e: AccessibilityEvent?) {
         e ?: return
         val pkg = e.packageName?.toString() ?: return
-        if (pkg == packageName || !Prefs.enabled(this) || pkg !in Prefs.locked(this)) return
+        val focus = Prefs.focusActive(this)
+        if (pkg == packageName || !((Prefs.enabled(this) && Prefs.lockWindowActive(this)) || focus) || pkg !in Prefs.locked(this)) return
         when (e.eventType) {
-            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> if (Prefs.scrolls(this) <= 0) block()
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> if (focus || Prefs.scrolls(this) <= 0) block(focus)
             AccessibilityEvent.TYPE_VIEW_SCROLLED -> {
+                if (focus) { block(true); return }
                 val now = System.currentTimeMillis()
-                if (Prefs.scrolls(this) <= 0) { block(); return }
+                if (Prefs.scrolls(this) <= 0) { block(false); return }
                 if (now - lastScrollAt < 650) return                 // one swipe fires many events; count it once
                 lastScrollAt = now
-                if (Prefs.useScroll(this) <= 0) block()
+                if (Prefs.useScroll(this) <= 0) block(false)
             }
         }
     }
 
-    private fun block() {
+    private fun block(focus: Boolean) {
         val now = System.currentTimeMillis()
         if (now - lastBlockAt < 2500) return
         lastBlockAt = now
         performGlobalAction(GLOBAL_ACTION_HOME)
-        Toast.makeText(this, "Locked. Do a push-up to earn ${Prefs.perPushup(this)} scrolls.", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, if (focus) "Focus mode: ${Prefs.focusLeftSeconds(this) / 60 + 1} min left. Do ${Prefs.focusRepsLeft(this)} reps to end it early." else "Locked. Do ${Prefs.exercise(this).unit}s to earn ${Prefs.perPushup(this)} scrolls.", Toast.LENGTH_SHORT).show()
         startActivity(Intent(this, PushUpActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP))
     }
 

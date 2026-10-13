@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.LinearLayout
+import android.widget.RadioButton
 import android.widget.ScrollView
 import android.widget.Switch
 import android.widget.TextView
@@ -50,9 +51,14 @@ class LockSettingsActivity : ComponentActivity() {
 
         col.addView(Button(this).apply { text = "1. Allow the lock in Accessibility settings"; setOnClickListener { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) } })
         col.addView(tv("Find Womanten app lock in the list and turn it on. It only sees which app is open and how often it scrolls, never your screen or messages.", 12f, "#8E8E8E"))
-        col.addView(Button(this).apply { text = "2. Practice push-ups now"; setOnClickListener { startActivity(Intent(this@LockSettingsActivity, PushUpActivity::class.java)) } })
+        col.addView(Button(this).apply { text = "2. Practice now"; setOnClickListener { startActivity(Intent(this@LockSettingsActivity, PushUpActivity::class.java)) } })
 
-        col.addView(tv("Scrolls earned per push-up", 16f, "#FFFFFF", true))
+        col.addView(tv("What do you do to unlock?", 16f, "#FFFFFF", true))
+        val ex = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val exButtons = Exercise.values().map { e -> RadioButton(this).apply { text = e.label; setTextColor(Color.WHITE); isChecked = Prefs.exercise(this@LockSettingsActivity) == e; tag = e } }
+        exButtons.forEach { rb -> ex.addView(rb); rb.setOnClickListener { Prefs.setExercise(this@LockSettingsActivity, rb.tag as Exercise); exButtons.forEach { it.isChecked = it === rb } } }
+        col.addView(ex)
+        col.addView(tv("Scrolls earned for each rep (plank: each 10 seconds)", 16f, "#FFFFFF", true))
         val per = TextView(this).apply { textSize = 22f; setTextColor(Color.WHITE); gravity = Gravity.CENTER }
         val row = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
         fun show() { per.text = Prefs.perPushup(this).toString() }
@@ -60,6 +66,19 @@ class LockSettingsActivity : ComponentActivity() {
         row.addView(per, LinearLayout.LayoutParams(160, ViewGroup.LayoutParams.WRAP_CONTENT)); show()
         row.addView(Button(this).apply { text = "+"; setOnClickListener { Prefs.setPerPushup(this@LockSettingsActivity, Prefs.perPushup(this@LockSettingsActivity) + 5); show() } })
         col.addView(row)
+
+        col.addView(tv("When is the lock on?", 16f, "#FFFFFF", true))
+        val sched = Switch(this).apply { text = "Only lock during certain hours"; setTextColor(Color.WHITE); isChecked = Prefs.scheduleOn(this@LockSettingsActivity) }
+        val schedInfo = TextView(this).apply { setTextColor(Color.parseColor("#E8998D")); textSize = 14f }
+        fun showSched() { schedInfo.text = if (Prefs.scheduleOn(this@LockSettingsActivity)) "Locked from ${Prefs.schedFrom(this@LockSettingsActivity)}:00 to ${Prefs.schedTo(this@LockSettingsActivity)}:00 (tap to change)" else "Locked all day" }
+        sched.setOnCheckedChangeListener { _, on -> Prefs.setScheduleOn(this@LockSettingsActivity, on); showSched() }
+        schedInfo.setOnClickListener {
+            if (!Prefs.scheduleOn(this)) return@setOnClickListener
+            android.app.TimePickerDialog(this, { _, from, _ ->
+                android.app.TimePickerDialog(this, { _, to, _ -> Prefs.setSchedule(this, from, to); showSched() }, Prefs.schedTo(this), 0, true).apply { setTitle("Lock until") }.show()
+            }, Prefs.schedFrom(this), 0, true).apply { setTitle("Lock from") }.show()
+        }
+        showSched(); col.addView(sched); col.addView(schedInfo)
 
         col.addView(tv("Apps to lock", 16f, "#FFFFFF", true))
         list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }; col.addView(list)
