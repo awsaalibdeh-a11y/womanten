@@ -236,6 +236,8 @@ def download_windows():
 @app.get("/download")
 def download():
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+    if os.environ.get("APK_URL", "https://huggingface.co/datasets/Death242/downloads/resolve/main/womanten.apk"):
+        return redirect(os.environ.get("APK_URL", "https://huggingface.co/datasets/Death242/downloads/resolve/main/womanten.apk"), 302)       # 40 MB: served from Hugging Face, not Render's 5 GB
     if not os.path.exists(os.path.join(path, "womanten.apk")):
         return err("The Android app is not uploaded yet.", 404)
     return send_from_directory(path, "womanten.apk", as_attachment=True, mimetype="application/vnd.android.package-archive")
